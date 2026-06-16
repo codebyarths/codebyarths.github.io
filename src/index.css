@@ -29,6 +29,15 @@
   ::selection {
     @apply bg-brand text-white;
   }
+
+  /* Guard global: nenhum input[type=date] pode impor largura intrínseca
+     (raiz do vazamento do campo de data no iOS Safari). */
+  input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+  }
 }
 
 @layer components {
@@ -62,6 +71,44 @@
 
   .input {
     @apply w-full min-w-0 max-w-full rounded-xl border border-charcoal/15 bg-white px-3.5 py-2.5 text-base text-charcoal outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20;
+  }
+
+  /* Campo de data customizado (DateField): o foco real é no input invisível,
+     então espelhamos o anel de foco no display .input. */
+  .datefield:focus-within .input {
+    @apply border-brand ring-2 ring-brand/20;
+  }
+
+  /* Blindagem do input[type=date] sobreposto (WebKit/iOS): transparente,
+     16px (sem auto-zoom) e o indicador nativo cobre todo o campo para
+     que tocar em qualquer ponto abra o date picker do iPhone. */
+  .datefield-input {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    min-width: 0;
+    font-size: 16px;
+  }
+  .datefield-input::-webkit-date-and-time-value {
+    text-align: left;
+    margin: 0;
+    min-width: 0;
+  }
+  .datefield-input::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .datefield-input::-webkit-clear-button,
+  .datefield-input::-webkit-inner-spin-button {
+    display: none;
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   .section {

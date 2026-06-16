@@ -1,7 +1,14 @@
 import { useState } from "react";
-import { Star, CheckCircle2, CalendarDays, MapPin, Car, ArrowRight } from "lucide-react";
+import { Star, CheckCircle2, MapPin, Car, ArrowRight } from "lucide-react";
 import { COMPANY, FLEET, WHATSAPP } from "@/lib/data";
 import { asset } from "@/lib/asset";
+import DateField from "@/components/DateField";
+
+/** ISO yyyy-mm-dd -> dd/mm/aaaa, com fallback "a combinar" quando vazio. */
+const fmtBR = (iso: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "a combinar";
+};
 
 export default function Hero() {
   const [form, setForm] = useState({
@@ -12,9 +19,9 @@ export default function Hero() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const msg = `Olá! Quero fazer uma reserva na MCM Rent a Car.%0A%0A• Retirada na loja (Distrito Industrial)%0A• Data de retirada: ${
-      form.retirada || "a combinar"
-    }%0A• Data de devolução: ${form.devolucao || "a combinar"}%0A• Categoria: ${form.categoria}`;
+    const msg = `Olá! Quero fazer uma reserva na MCM Rent a Car.%0A%0A• Retirada na loja (Distrito Industrial)%0A• Data de retirada: ${fmtBR(
+      form.retirada
+    )}%0A• Data de devolução: ${fmtBR(form.devolucao)}%0A• Categoria: ${form.categoria}`;
     window.open(`https://wa.me/${COMPANY.phoneRaw}?text=${msg}`, "_blank");
   };
 
@@ -89,22 +96,17 @@ export default function Hero() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Retirada" icon={<CalendarDays className="h-4 w-4" />}>
-                <input
-                  type="date"
-                  value={form.retirada}
-                  onChange={(e) => setForm({ ...form, retirada: e.target.value })}
-                  className="input"
-                />
-              </Field>
-              <Field label="Devolução" icon={<CalendarDays className="h-4 w-4" />}>
-                <input
-                  type="date"
-                  value={form.devolucao}
-                  onChange={(e) => setForm({ ...form, devolucao: e.target.value })}
-                  className="input"
-                />
-              </Field>
+              <DateField
+                label="Retirada"
+                value={form.retirada}
+                onChange={(iso) => setForm({ ...form, retirada: iso })}
+              />
+              <DateField
+                label="Devolução"
+                value={form.devolucao}
+                min={form.retirada || undefined}
+                onChange={(iso) => setForm({ ...form, devolucao: iso })}
+              />
             </div>
 
             <Field label="Categoria" icon={<Car className="h-4 w-4" />}>
