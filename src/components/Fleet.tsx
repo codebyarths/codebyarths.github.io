@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Users, Cog, Fuel, ArrowRight } from "lucide-react";
 import { FLEET, COMPANY } from "@/lib/data";
+import { asset } from "@/lib/asset";
 import Reveal from "./Reveal";
 
 const CATEGORIES = ["Todos", ...Array.from(new Set(FLEET.map((v) => v.category)))];
@@ -56,7 +57,7 @@ export default function Fleet() {
               >
                 <div className="relative h-52 overflow-hidden">
                   <img
-                    src={v.image}
+                    src={asset(v.image)}
                     alt={v.name}
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                   />

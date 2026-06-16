@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Menu, X, Phone } from "lucide-react";
 import { NAV, WHATSAPP, COMPANY } from "@/lib/data";
+import { asset } from "@/lib/asset";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -24,7 +25,7 @@ export default function Navbar() {
       <nav className="container-x flex h-[72px] items-center justify-between">
         <a href="#inicio" className="flex items-center gap-3" aria-label={COMPANY.name}>
           <img
-            src="/brand/logo-mcm.jpg"
+            src={asset("brand/logo-mcm.jpg")}
             alt={COMPANY.name}
             className="h-11 w-auto rounded-md ring-1 ring-white/10"
           />

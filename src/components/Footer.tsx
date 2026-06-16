@@ -1,5 +1,6 @@
 import { Phone, Mail, MapPin, Instagram, Facebook } from "lucide-react";
 import { COMPANY, NAV, FLEET, WHATSAPP } from "@/lib/data";
+import { asset } from "@/lib/asset";
 
 export default function Footer() {
   const year = 2026;
@@ -10,7 +11,7 @@ export default function Footer() {
       <div className="container-x grid gap-10 py-16 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <img
-            src="/brand/logo-mcm.jpg"
+            src={asset("brand/logo-mcm.jpg")}
             alt={COMPANY.name}
             className="h-12 w-auto rounded-md ring-1 ring-white/10"
           />

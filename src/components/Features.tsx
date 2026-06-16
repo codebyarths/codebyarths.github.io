@@ -1,9 +1,9 @@
 import {
   ShieldCheck,
-  Gauge,
+  CalendarClock,
   Headset,
   FileCheck2,
-  MapPin,
+  Store,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -12,10 +12,10 @@ import Reveal from "./Reveal";
 
 const ICONS: Record<string, LucideIcon> = {
   ShieldCheck,
-  Gauge,
+  CalendarClock,
   Headset,
   FileCheck2,
-  MapPin,
+  Store,
   Wrench,
 };
 

@@ -1,5 +1,6 @@
 import { Check, Zap } from "lucide-react";
 import { WHATSAPP } from "@/lib/data";
+import { asset } from "@/lib/asset";
 import Reveal from "./Reveal";
 
 const BENEFITS = [
@@ -15,7 +16,7 @@ export default function AppDrivers() {
     <section id="app" className="relative overflow-hidden bg-ink py-20 lg:py-28">
       <div className="absolute inset-0 bg-grid opacity-60" />
       <div className="absolute -right-32 top-0 h-full w-1/2">
-        <img src="/brand/moto.jpg" alt="" className="h-full w-full object-cover opacity-25" />
+        <img src={asset("brand/moto.jpg")} alt="" className="h-full w-full object-cover opacity-25" />
         <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/70 to-transparent" />
       </div>
 

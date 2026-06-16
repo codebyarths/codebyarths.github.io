@@ -1,5 +1,6 @@
 import { ArrowRight, Phone } from "lucide-react";
 import { COMPANY, WHATSAPP } from "@/lib/data";
+import { asset } from "@/lib/asset";
 import Reveal from "./Reveal";
 
 export default function CtaBanner() {
@@ -9,7 +10,7 @@ export default function CtaBanner() {
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl bg-ink px-7 py-12 sm:px-12 lg:py-16">
             <img
-              src="/brand/road.jpg"
+              src={asset("brand/road.jpg")}
               alt=""
               className="absolute inset-0 h-full w-full object-cover opacity-30"
             />

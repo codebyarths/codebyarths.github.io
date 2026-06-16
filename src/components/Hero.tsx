@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Star, CheckCircle2, CalendarDays, MapPin, Car, ArrowRight } from "lucide-react";
 import { COMPANY, FLEET, WHATSAPP } from "@/lib/data";
+import { asset } from "@/lib/asset";
 
 export default function Hero() {
   const [form, setForm] = useState({
-    local: "Loja - Distrito Industrial",
     retirada: "",
     devolucao: "",
     categoria: FLEET[0].category,
@@ -12,7 +12,7 @@ export default function Hero() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const msg = `Olá! Quero fazer uma reserva na MCM Rent a Car.%0A%0A• Retirada: ${form.local}%0A• Data de retirada: ${
+    const msg = `Olá! Quero fazer uma reserva na MCM Rent a Car.%0A%0A• Retirada na loja (Distrito Industrial)%0A• Data de retirada: ${
       form.retirada || "a combinar"
     }%0A• Data de devolução: ${form.devolucao || "a combinar"}%0A• Categoria: ${form.categoria}`;
     window.open(`https://wa.me/${COMPANY.phoneRaw}?text=${msg}`, "_blank");
@@ -23,7 +23,7 @@ export default function Hero() {
       {/* Background */}
       <div className="absolute inset-0">
         <img
-          src="/brand/hero.png"
+          src={asset("brand/hero.png")}
           alt="Frota MCM Rent a Car"
           className="h-full w-full object-cover"
         />
@@ -78,17 +78,15 @@ export default function Hero() {
           </p>
 
           <div className="mt-5 space-y-4">
-            <Field label="Local de retirada" icon={<MapPin className="h-4 w-4" />}>
-              <select
-                value={form.local}
-                onChange={(e) => setForm({ ...form, local: e.target.value })}
-                className="input"
-              >
-                <option>Loja - Distrito Industrial</option>
-                <option>Aeroporto de Manaus</option>
-                <option>Entrega no endereço</option>
-              </select>
-            </Field>
+            <div className="flex items-start gap-2.5 rounded-xl bg-brand/5 px-3.5 py-2.5 ring-1 ring-brand/15">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-charcoal/55">
+                  Retirada e devolução
+                </p>
+                <p className="text-sm font-medium text-charcoal">Na nossa loja — Distrito Industrial</p>
+              </div>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <Field label="Retirada" icon={<CalendarDays className="h-4 w-4" />}>

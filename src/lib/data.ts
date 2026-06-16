@@ -112,7 +112,7 @@ export const PLANS: Plan[] = [
     features: [
       "Sem fidelidade",
       "Retirada no mesmo dia",
-      "Quilometragem livre na cidade",
+      "Pague apenas pelos dias usados",
       "Seguro básico incluso",
     ],
     cta: "Alugar por diária",
@@ -159,9 +159,9 @@ export const FEATURES: Feature[] = [
     text: "Todos os planos acompanham cobertura para você rodar tranquilo.",
   },
   {
-    icon: "Gauge",
-    title: "Quilometragem livre",
-    text: "Rode sem se preocupar com limites na cidade e na estrada.",
+    icon: "CalendarClock",
+    title: "Diárias flexíveis",
+    text: "Alugue por dia, semana ou mês — você escolhe o período ideal.",
   },
   {
     icon: "Headset",
@@ -174,9 +174,9 @@ export const FEATURES: Feature[] = [
     text: "Reserva ágil, contrato digital e retirada no mesmo dia.",
   },
   {
-    icon: "MapPin",
-    title: "Entrega no local",
-    text: "Levamos o veículo até você em toda a região de Manaus.",
+    icon: "Store",
+    title: "Retirada ágil na loja",
+    text: "Processo rápido e sem espera na nossa loja, no Distrito Industrial.",
   },
   {
     icon: "Wrench",
@@ -201,7 +201,7 @@ export const STEPS: Step[] = [
   },
   {
     title: "Retire e dirija",
-    text: "Pegue o carro na loja ou receba no local combinado e caia na estrada.",
+    text: "Retire o veículo na nossa loja, no Distrito Industrial, e caia na estrada.",
   },
 ];
 
@@ -228,7 +228,7 @@ export const TESTIMONIALS: Testimonial[] = [
     name: "André Martins",
     role: "Turista",
     quote:
-      "Passei uma semana em Manaus e aluguei um SUV. Entregaram no hotel e o atendimento foi nota 10.",
+      "Passei uma semana em Manaus e aluguei um SUV. Retirada rápida na loja e atendimento nota 10.",
   },
 ];
 
@@ -255,8 +255,8 @@ export const FAQS: Faq[] = [
     a: "Todos os planos contam com cobertura. Você também pode contratar proteções adicionais para rodar com ainda mais tranquilidade.",
   },
   {
-    q: "Vocês entregam o veículo?",
-    a: "Sim. Entregamos e retiramos o veículo no local combinado em toda a região metropolitana de Manaus.",
+    q: "Onde retiro e devolvo o veículo?",
+    a: "A retirada e a devolução são sempre na nossa loja, no Distrito Industrial, em Manaus/AM. Processo rápido e sem burocracia.",
   },
 ];
 

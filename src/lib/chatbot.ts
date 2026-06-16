@@ -108,8 +108,8 @@ export const INTENTS: Intent[] = [
       "funciona",
     ],
     answer:
-      "É bem simples, em 3 passos: 🚗\n\n**1.** Escolha o veículo (carro ou moto)\n**2.** Faça o cadastro aqui comigo ou pelo WhatsApp\n**3.** Retire na loja ou receba no local combinado\n\nQuer começar agora?",
-    suggestions: ["Quero alugar", "Documentos", "Entrega no local"],
+      "É bem simples, em 3 passos: 🚗\n\n**1.** Escolha o veículo (carro ou moto)\n**2.** Faça o cadastro aqui comigo ou pelo WhatsApp\n**3.** Retire o veículo na nossa loja, no Distrito Industrial\n\nQuer começar agora?",
+    suggestions: ["Quero alugar", "Documentos", "Onde fica a loja"],
   },
   {
     id: "app",
@@ -137,10 +137,10 @@ export const INTENTS: Intent[] = [
   },
   {
     id: "entrega",
-    keywords: ["entrega", "entregar", "leva", "levam", "buscar", "domicilio", "no local", "aeroporto"],
+    keywords: ["entrega", "entregar", "leva", "levam", "buscar", "domicilio", "no local", "aeroporto", "retirada", "retirar", "onde pego", "onde retiro"],
     answer:
-      "Sim, nós **entregamos e retiramos** o veículo no local combinado em toda a região metropolitana de Manaus, incluindo o aeroporto. 📍",
-    suggestions: ["Quero alugar", "Endereço da loja", "Falar no WhatsApp"],
+      "A **retirada e a devolução** são sempre na nossa loja, no Distrito Industrial, em Manaus/AM. 📍 É rapidinho e sem burocracia — não trabalhamos com entrega no endereço.",
+    suggestions: ["Quero alugar", "Onde fica a loja", "Falar no WhatsApp"],
   },
   {
     id: "planos",
@@ -168,8 +168,8 @@ export const INTENTS: Intent[] = [
     id: "quilometragem",
     keywords: ["quilometragem", "km", "limite", "rodar quanto", "kilometragem"],
     answer:
-      "Nossos planos contam com **quilometragem livre** na cidade — você roda sem se preocupar com limites. Para viagens longas, é só combinar com a equipe. 🛣️",
-    suggestions: ["Quero alugar", "Preços"],
+      "As condições de quilometragem variam conforme o plano escolhido e são combinadas no momento da reserva. 🛣️ Posso te conectar com a equipe pra confirmar os detalhes?",
+    suggestions: ["Falar no WhatsApp", "Planos e assinatura", "Quero alugar"],
   },
   {
     id: "cancelamento",
@@ -187,8 +187,8 @@ export const INTENTS: Intent[] = [
   {
     id: "endereco",
     keywords: ["endereco", "onde fica", "localizacao", "loja", "mapa", "como chego", "fica onde"],
-    answer: `Estamos em: 📍\n\n${COMPANY.address}\n\n${COMPANY.hours}`,
-    suggestions: ["Entrega no local", "Quero alugar", "Falar no WhatsApp"],
+    answer: `Estamos em: 📍\n\n${COMPANY.address}\n\nA retirada e a devolução são sempre aqui na loja.\n\n${COMPANY.hours}`,
+    suggestions: ["Como funciona", "Quero alugar", "Falar no WhatsApp"],
   },
   {
     id: "contato",
