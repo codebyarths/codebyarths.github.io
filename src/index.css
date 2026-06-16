@@ -10,6 +10,8 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: calc(84px + env(safe-area-inset-top));
+    /* Fundo escuro no topo/overscroll → ajuda o Safari a pintar a status bar de escuro */
+    background-color: #121212;
   }
 
   body {

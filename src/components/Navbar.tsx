@@ -18,8 +18,8 @@ export default function Navbar() {
     <header
       className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-all duration-300 ${
         scrolled
-          ? "bg-ink/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-ink/80"
-          : "bg-gradient-to-b from-ink/70 to-transparent"
+          ? "bg-ink shadow-lg"
+          : "bg-gradient-to-b from-ink/80 to-transparent"
       }`}
     >
       {/* Faixa sólida cobrindo a status bar do iOS (horário/bateria) */}
