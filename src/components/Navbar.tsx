@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Menu, X, Phone } from "lucide-react";
-import { NAV, WHATSAPP, COMPANY } from "@/lib/data";
+import { NAV, COMPANY } from "@/lib/data";
+import { abrirChat } from "@/lib/chatbot";
 import { asset } from "@/lib/asset";
 
 export default function Navbar() {
@@ -54,9 +55,9 @@ export default function Navbar() {
             <Phone className="h-4 w-4 text-brand" />
             {COMPANY.phone}
           </a>
-          <a href={WHATSAPP} target="_blank" rel="noreferrer" className="btn-primary">
+          <button onClick={() => abrirChat()} className="btn-primary">
             Reservar agora
-          </a>
+          </button>
         </div>
 
         <button
@@ -85,14 +86,15 @@ export default function Navbar() {
               {item.label}
             </a>
           ))}
-          <a
-            href={WHATSAPP}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            onClick={() => {
+              setOpen(false);
+              abrirChat();
+            }}
             className="btn-primary mt-2 w-full"
           >
             Reservar agora
-          </a>
+          </button>
         </div>
       </div>
     </header>

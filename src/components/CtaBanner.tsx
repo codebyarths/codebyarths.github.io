@@ -1,5 +1,6 @@
 import { ArrowRight, Phone } from "lucide-react";
-import { COMPANY, WHATSAPP } from "@/lib/data";
+import { COMPANY } from "@/lib/data";
+import { abrirChat } from "@/lib/chatbot";
 import { asset } from "@/lib/asset";
 import Reveal from "./Reveal";
 
@@ -10,7 +11,7 @@ export default function CtaBanner() {
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl bg-ink px-7 py-12 sm:px-12 lg:py-16">
             <img
-              src={asset("brand/road.jpg")}
+              src={asset("brand/suv.jpg")}
               alt=""
               className="absolute inset-0 h-full w-full object-cover opacity-30"
             />
@@ -25,9 +26,9 @@ export default function CtaBanner() {
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <a href={WHATSAPP} target="_blank" rel="noreferrer" className="btn-primary text-base">
+                <button onClick={() => abrirChat()} className="btn-primary text-base">
                   Reservar agora <ArrowRight className="h-4 w-4" />
-                </a>
+                </button>
                 <a href={`tel:+${COMPANY.phoneRaw}`} className="btn-outline text-base">
                   <Phone className="h-4 w-4" /> {COMPANY.phone}
                 </a>

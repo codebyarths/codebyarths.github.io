@@ -1,6 +1,9 @@
-import { Check } from "lucide-react";
-import { PLANS, WHATSAPP } from "@/lib/data";
+import { Check, Table2 } from "lucide-react";
+import { PLANS } from "@/lib/data";
+import { abrirChat, abrirPlanos } from "@/lib/chatbot";
 import Reveal from "./Reveal";
+
+const PLANOS_SECAO = PLANS.filter((p) => p.naSecao);
 
 export default function Plans() {
   return (
@@ -12,12 +15,13 @@ export default function Plans() {
             Escolha o formato que cabe na sua rotina
           </h2>
           <p className="mt-4 text-charcoal/60">
-            Da diária flexível à assinatura sem entrada — você no controle, sem surpresas.
+            Do plano semanal para motoristas de app ao plano Fidelidade, em que o veículo
+            fica seu — você no controle, sem surpresas.
           </p>
         </Reveal>
 
-        <div className="mt-12 grid gap-7 lg:grid-cols-3">
-          {PLANS.map((p, i) => (
+        <div className="mx-auto mt-12 grid max-w-4xl gap-7 sm:grid-cols-2">
+          {PLANOS_SECAO.map((p, i) => (
             <Reveal key={p.name} delay={i * 90}>
               <div
                 className={`relative flex h-full flex-col rounded-2xl p-8 transition ${
@@ -27,8 +31,8 @@ export default function Plans() {
                 }`}
               >
                 {p.highlight && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-grad px-4 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
-                    Mais escolhido
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-brand-grad px-4 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
+                    {p.tag ?? "Mais escolhido"}
                   </span>
                 )}
 
@@ -37,7 +41,16 @@ export default function Plans() {
                   {p.description}
                 </p>
 
-                <div className="mt-6 flex items-end gap-1">
+                {p.pricePrefix && (
+                  <p
+                    className={`mt-6 text-xs font-medium ${
+                      p.highlight ? "text-white/55" : "text-charcoal/45"
+                    }`}
+                  >
+                    {p.pricePrefix}
+                  </p>
+                )}
+                <div className={`flex items-end gap-1 ${p.pricePrefix ? "mt-0.5" : "mt-6"}`}>
                   <span className="font-display text-4xl font-extrabold">{p.priceLabel}</span>
                   <span className={`pb-1 text-sm ${p.highlight ? "text-white/60" : "text-charcoal/50"}`}>
                     {p.unit}
@@ -61,18 +74,26 @@ export default function Plans() {
                   ))}
                 </ul>
 
-                <a
-                  href={WHATSAPP}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  onClick={() => abrirChat({ plano: p.name })}
                   className={`mt-8 ${p.highlight ? "btn-primary" : "btn-ghost"} w-full`}
                 >
                   {p.cta}
-                </a>
+                </button>
               </div>
             </Reveal>
           ))}
         </div>
+
+        <Reveal className="mt-10 text-center">
+          <button
+            onClick={() => abrirPlanos()}
+            className="inline-flex items-center gap-2 rounded-full border border-charcoal/15 bg-white px-6 py-3 text-sm font-semibold text-charcoal transition hover:border-brand hover:text-brand"
+          >
+            <Table2 className="h-4 w-4" />
+            Ver tabela completa de franquias e caução
+          </button>
+        </Reveal>
       </div>
     </section>
   );

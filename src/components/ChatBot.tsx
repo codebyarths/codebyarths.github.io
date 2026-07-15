@@ -1,18 +1,25 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MessageSquare, X, Send, RotateCcw, Bot, ExternalLink } from "lucide-react";
-import { COMPANY } from "@/lib/data";
+import { FLEET } from "@/lib/data";
+import { enviarEmailLoja } from "@/lib/email";
 import {
   WELCOME,
   INITIAL_SUGGESTIONS,
   FALLBACK_ANSWER,
   CADASTRO_STEPS,
+  CHAT_OPEN_EVENT,
   matchIntent,
   isCadastroTrigger,
   cadastroToWhats,
+  cadastroToEmail,
   cadastroResumo,
   whatsLink,
   salvarCadastro,
+  stepOptions,
+  stepQuestion,
+  proximoPasso,
   type CadastroData,
+  type ChatOpenDetail,
 } from "@/lib/chatbot";
 
 type Msg = {
@@ -79,6 +86,9 @@ export default function ChatBot() {
   const pushUser = (content: string) =>
     setMessages((m) => [...m, { id: nextId(), role: "user", content }]);
 
+  const pushBot = (content: string, suggestions?: string[]) =>
+    setMessages((m) => [...m, { id: nextId(), role: "bot", content, suggestions }]);
+
   const botSay = (content: string, suggestions?: string[], delay = 480) => {
     setTyping(true);
     window.setTimeout(() => {
@@ -87,36 +97,81 @@ export default function ChatBot() {
     }, delay);
   };
 
-  const startCadastro = () => {
+  const startCadastro = (prefill: CadastroData = {}, intro?: string) => {
+    const first = proximoPasso(prefill);
+    if (first === -1) return; // nunca acontece: cadastro sempre tem passos em aberto
     setMode("cadastro");
-    setStep(0);
-    setData({});
-    const s0 = CADASTRO_STEPS[0];
-    botSay(s0.question, s0.type === "options" ? s0.options : undefined);
+    setStep(first);
+    setData(prefill);
+    const s = CADASTRO_STEPS[first];
+    const abertura = intro ?? "Perfeito! Vou fazer seu cadastro rapidinho. 📝";
+    botSay(`${abertura}\n\n${stepQuestion(s, prefill)}`, stepOptions(s, prefill));
   };
+
+  // Abertura do chat a partir dos cards da frota / hero, com pré-seleção.
+  useEffect(() => {
+    const onOpenChat = (e: Event) => {
+      const detail = ((e as CustomEvent<ChatOpenDetail>).detail ?? {}) as ChatOpenDetail;
+      setOpen(true);
+      const prefill: CadastroData = {};
+      let intro: string | undefined;
+      if (detail.veiculo) {
+        const v = FLEET.find((f) => f.short === detail.veiculo || f.name === detail.veiculo);
+        if (v) {
+          prefill.veiculo = v.short;
+          prefill.categoria = v.category;
+          intro = `**${v.name}** é uma ótima escolha! ${
+            v.category === "Motos" ? "🏍️" : "🚗"
+          } Vou fazer seu cadastro rapidinho e te levar para o WhatsApp da loja. 📝`;
+        }
+      } else if (detail.categoria) {
+        prefill.categoria = detail.categoria;
+        intro = `Boa! Vou fazer seu cadastro para a categoria **${detail.categoria}**. 📝`;
+      }
+      if (detail.plano) {
+        prefill.plano = detail.plano;
+        intro ??= `Boa escolha! Vou fazer seu cadastro para o plano **${detail.plano}**. 📝`;
+      }
+      startCadastro(prefill, intro);
+    };
+    window.addEventListener(CHAT_OPEN_EVENT, onOpenChat);
+    return () => window.removeEventListener(CHAT_OPEN_EVENT, onOpenChat);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const finalize = (finalData: CadastroData) => {
     salvarCadastro(finalData);
     setMode("done");
     botSay(cadastroResumo(finalData), undefined, 520);
+    // Envio automático dos dados para o e-mail da loja (em paralelo ao WhatsApp).
+    enviarEmailLoja(
+      `Novo cadastro pelo site — ${finalData.veiculo ?? "veículo a definir"}`,
+      cadastroToEmail(finalData)
+    ).then((ok) => {
+      pushBot(
+        ok
+          ? "📧 Seus dados também já foram enviados para o e-mail da nossa equipe!"
+          : "⚠️ Não consegui enviar o e-mail automático agora, mas sem problemas — finalize pelo WhatsApp que a equipe recebe tudo."
+      );
+    });
   };
 
   const handleCadastro = (text: string) => {
     const current = CADASTRO_STEPS[step];
     const err = current.validate?.(text);
     if (err) {
-      botSay(err, current.type === "options" ? current.options : undefined);
+      botSay(err, stepOptions(current, dataRef.current));
       return;
     }
-    const updated = { ...dataRef.current, [current.key]: text.trim() };
+    const valor = current.transform ? current.transform(text.trim()) : text.trim();
+    const updated = { ...dataRef.current, [current.key]: valor };
     setData(updated);
-    const nextStep = step + 1;
-    if (nextStep < CADASTRO_STEPS.length) {
-      setStep(nextStep);
-      const ns = CADASTRO_STEPS[nextStep];
-      botSay(ns.question, ns.type === "options" ? ns.options : undefined);
-    } else {
+    const next = proximoPasso(updated, step + 1);
+    if (next === -1) {
       finalize(updated);
+    } else {
+      setStep(next);
+      const ns = CADASTRO_STEPS[next];
+      botSay(stepQuestion(ns, updated), stepOptions(ns, updated));
     }
   };
 
@@ -177,7 +232,10 @@ export default function ChatBot() {
     }
   };
 
-  const progresso = mode === "cadastro" ? Math.round((step / CADASTRO_STEPS.length) * 100) : 0;
+  const totalPassos = CADASTRO_STEPS.filter((s) => !s.skip?.(data)).length;
+  const respondidos = CADASTRO_STEPS.filter((s) => data[s.key] !== undefined).length;
+  const progresso =
+    mode === "cadastro" ? Math.round((respondidos / totalPassos) * 100) : 0;
 
   return (
     <>
@@ -273,7 +331,7 @@ export default function ChatBot() {
           {mode === "done" ? (
             <div className="space-y-2 border-t border-charcoal/10 bg-white p-3">
               <button onClick={enviarCadastroWhats} className="btn-primary w-full">
-                Enviar para o WhatsApp <ExternalLink className="h-4 w-4" />
+                Continuar no WhatsApp <ExternalLink className="h-4 w-4" />
               </button>
               <button
                 onClick={resetChat}

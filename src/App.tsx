@@ -12,6 +12,7 @@ import CtaBanner from "./components/CtaBanner";
 import Contact from "./components/Contact";
 import Footer from "./components/Footer";
 import ChatBot from "./components/ChatBot";
+import PlanDetails from "./components/PlanDetails";
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
       </main>
       <Footer />
       <ChatBot />
+      <PlanDetails />
     </div>
   );
 }

@@ -27,11 +27,17 @@ export const NAV = [
   { label: "Contato", href: "#contato" },
 ];
 
+export type Grupo = "C" | "D" | "DS" | "Moto";
+
 export type Vehicle = {
   category: string;
+  /** Nome completo exibido no card (ex.: "Fiat Mobi"). */
   name: string;
+  /** Nome curto para listas do chat (ex.: "Mobi"). */
+  short: string;
   image: string;
-  pricePerDay: number;
+  /** Grupo de preço (define a tabela semanal — ver GRUPOS). */
+  group: Grupo;
   seats: number;
   transmission: string;
   fuel: string;
@@ -39,110 +45,194 @@ export type Vehicle = {
   highlight?: boolean;
 };
 
+// Frota real da loja. Fotos ilustrativas por modelo.
 export const FLEET: Vehicle[] = [
-  {
-    category: "Compactos & Hatch",
-    name: "VW Polo / similar",
-    image: "/brand/compact.jpg",
-    pricePerDay: 119,
-    seats: 5,
-    transmission: "Automático",
-    fuel: "Flex",
-    badge: "Econômico",
-  },
-  {
-    category: "Hatch Esportivo",
-    name: "Hyundai HB20S / similar",
-    image: "/brand/sedan.jpg",
-    pricePerDay: 159,
-    seats: 5,
-    transmission: "Automático",
-    fuel: "Flex",
-    badge: "Mais alugado",
-    highlight: true,
-  },
-  {
-    category: "Sedan & Executivo",
-    name: "Mercedes CLS / similar",
-    image: "/brand/road.jpg",
-    pricePerDay: 289,
-    seats: 5,
-    transmission: "Automático",
-    fuel: "Gasolina",
-    badge: "Premium",
-  },
-  {
-    category: "SUV & Premium",
-    name: "Audi RS / similar",
-    image: "/brand/suv.jpg",
-    pricePerDay: 349,
-    seats: 5,
-    transmission: "Automático",
-    fuel: "Gasolina",
-    badge: "Top de linha",
-  },
-  {
-    category: "Motos",
-    name: "Honda CB / similar",
-    image: "/brand/moto.jpg",
-    pricePerDay: 69,
-    seats: 2,
-    transmission: "Manual",
-    fuel: "Gasolina",
-    badge: "Para trabalhar",
-  },
+  // Compactos — Grupo C
+  { category: "Compactos", name: "Fiat Mobi", short: "Mobi", image: "/brand/vehicles/mobi.jpg", group: "C", seats: 5, transmission: "Manual", fuel: "Flex", badge: "Mais econômico" },
+  { category: "Compactos", name: "Renault Kwid", short: "Kwid", image: "/brand/vehicles/kwid.png", group: "C", seats: 5, transmission: "Manual", fuel: "Flex" },
+  // Hatchs — Grupo D
+  { category: "Hatchs", name: "Fiat Argo", short: "Argo", image: "/brand/vehicles/argo.jpg", group: "D", seats: 5, transmission: "Manual", fuel: "Flex" },
+  { category: "Hatchs", name: "Hyundai HB20", short: "HB20", image: "/brand/vehicles/hb20.png", group: "D", seats: 5, transmission: "Manual", fuel: "Flex" },
+  { category: "Hatchs", name: "Chevrolet Onix", short: "Onix", image: "/brand/vehicles/onix.jpg", group: "D", seats: 5, transmission: "Manual", fuel: "Flex", badge: "Mais alugado", highlight: true },
+  { category: "Hatchs", name: "VW Polo", short: "Polo", image: "/brand/vehicles/polo.jpg", group: "D", seats: 5, transmission: "Manual", fuel: "Flex", badge: "Conforto" },
+  // Sedans — Grupo DS
+  { category: "Sedans", name: "Hyundai HB20S", short: "HB20S", image: "/brand/vehicles/hb20s.png", group: "DS", seats: 5, transmission: "Automático", fuel: "Flex" },
+  { category: "Sedans", name: "Chevrolet Onix Plus", short: "Onix Plus", image: "/brand/vehicles/onix-plus.jpg", group: "DS", seats: 5, transmission: "Automático", fuel: "Flex" },
+  { category: "Sedans", name: "Fiat Cronos", short: "Cronos", image: "/brand/vehicles/cronos.jpg", group: "DS", seats: 5, transmission: "Automático", fuel: "Flex", badge: "Porta-malas grande" },
+  // Moto
+  { category: "Motos", name: "Honda CG 160 Start", short: "CG 160 Start", image: "/brand/vehicles/cg160.jpg", group: "Moto", seats: 2, transmission: "Manual", fuel: "Gasolina", badge: "Para trabalhar" },
 ];
+
+export const CATEGORIES = Array.from(new Set(FLEET.map((v) => v.category)));
+
+/** Modelos (nomes curtos) de uma categoria. */
+export function modelosDa(categoria: string): string[] {
+  return FLEET.filter((v) => v.category === categoria).map((v) => v.short);
+}
+
+/** Formata em reais no padrão pt-BR: 599.9 -> "R$ 599,90". */
+export function brl(n: number): string {
+  return "R$ " + n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/** Formata um inteiro no padrão pt-BR: 1250 -> "1.250". */
+export function num(n: number): string {
+  return n.toLocaleString("pt-BR");
+}
+
+export type Franquia = { km: number; semana: number };
+
+// Preços reais (fonte: mcmveiculos.com.br). Carros são alugados em planos
+// SEMANAIS para motoristas de app, por franquia de km. Caução dos carros: R$ 1.600.
+export const GRUPOS: Record<
+  Grupo,
+  { nome: string; exemplos: string; franquias: Franquia[]; caucao: number }
+> = {
+  C: {
+    nome: "Compactos",
+    exemplos: "Mobi, Kwid",
+    franquias: [
+      { km: 1250, semana: 599.9 },
+      { km: 1500, semana: 700.7 },
+      { km: 1750, semana: 801.5 },
+    ],
+    caucao: 1600,
+  },
+  D: {
+    nome: "Hatch",
+    exemplos: "Argo, Onix, Polo, HB20",
+    franquias: [
+      { km: 1250, semana: 649.95 },
+      { km: 1500, semana: 750.05 },
+      { km: 1750, semana: 850.5 },
+    ],
+    caucao: 1600,
+  },
+  DS: {
+    nome: "Sedan",
+    exemplos: "Onix Plus, HB20S, Cronos",
+    franquias: [
+      { km: 1250, semana: 750.05 },
+      { km: 1500, semana: 871.5 },
+      { km: 1750, semana: 990.15 },
+    ],
+    caucao: 1600,
+  },
+  Moto: {
+    nome: "Moto",
+    exemplos: "CG 160 Start",
+    franquias: [{ km: 1000, semana: 280 }],
+    caucao: 500,
+  },
+};
+
+// Moto CG 160 Start — planos avulsos (diária/semanal/mensal).
+export const MOTO_PRECOS = {
+  diaria: 55, // km livre, máximo 6 diárias
+  semanal: 280, // franquia 1.000 km
+  mensal: 1100, // franquia 4.000 km
+  caucao: 500,
+};
+
+// Plano Fidelidade — o veículo é transferido ao locatário ao final do contrato.
+export const FIDELIDADE = {
+  carro: { modelo: "VW Polo Track", meses: 48, diaria: 135, caucao: 7000 },
+  moto: [
+    { plano: "3 anos", semanal: 335 },
+    { plano: "2,5 anos", semanal: 390, popular: true },
+    { plano: "2 anos", semanal: 470 },
+  ],
+  motoCaucao: 1000, // parcelável em até 12x no cartão
+};
+
+/** Menor valor semanal do grupo do veículo. */
+export function semanaFrom(v: Vehicle): number {
+  return GRUPOS[v.group].franquias[0].semana;
+}
+
+/** Rótulo de preço "a partir de" para o card da frota. */
+export function precoCard(v: Vehicle): { value: string; unit: string; note: string } {
+  if (v.group === "Moto") {
+    return { value: brl(MOTO_PRECOS.diaria), unit: "/dia", note: "km livre" };
+  }
+  const f = GRUPOS[v.group].franquias[0];
+  return { value: brl(f.semana), unit: "/sem", note: `franquia ${num(f.km)} km` };
+}
 
 export type Plan = {
   name: string;
   description: string;
   priceLabel: string;
+  /** Prefixo pequeno antes do valor (ex.: "a partir de"). */
+  pricePrefix?: string;
   unit: string;
   features: string[];
   highlight?: boolean;
+  /** Selo exibido no topo do card quando em destaque. */
+  tag?: string;
+  /** Exibir na seção "Planos" da home. Diária/Mensal (só moto) ficam de fora. */
+  naSecao?: boolean;
   cta: string;
 };
 
 export const PLANS: Plan[] = [
   {
+    name: "Semanal — App",
+    description: "Para motoristas de aplicativo rodarem sem preocupação.",
+    priceLabel: brl(GRUPOS.C.franquias[0].semana),
+    pricePrefix: "a partir de",
+    unit: "/sem",
+    features: [
+      "Franquias de 1.250, 1.500 ou 1.750 km/semana",
+      "Compactos, hatchs e sedans aceitos nas categorias de app",
+      "Caução de R$ 1.600 parcelável em até 12x",
+      "Renovação semanal por boleto",
+    ],
+    naSecao: true,
+    cta: "Quero rodar de app",
+  },
+  {
     name: "Diária",
-    description: "Perfeito para viagens rápidas e necessidades pontuais.",
-    priceLabel: "R$ 119",
+    description: "Moto CG 160 Start para necessidades pontuais.",
+    priceLabel: brl(MOTO_PRECOS.diaria),
     unit: "/dia",
     features: [
-      "Sem fidelidade",
-      "Retirada no mesmo dia",
-      "Pague apenas pelos dias usados",
-      "Seguro básico incluso",
+      "Quilometragem livre — rode o quanto precisar",
+      "Máximo de 6 diárias por contrato",
+      "Retirada no mesmo dia, sem agendamento",
+      "Caução de R$ 500",
     ],
     cta: "Alugar por diária",
   },
   {
     name: "Mensal",
-    description: "Ideal para quem precisa de um carro no dia a dia.",
-    priceLabel: "R$ 2.190",
+    description: "Moto CG 160 Start no melhor custo-benefício.",
+    priceLabel: brl(MOTO_PRECOS.mensal),
     unit: "/mês",
     features: [
-      "Economia de até 35%",
-      "Manutenção por nossa conta",
-      "Carro reserva em revisões",
-      "Suporte prioritário 24h",
+      "Super franquia de 4.000 km/mês",
+      "Manutenção preventiva por nossa conta",
+      "Assistência e reboque 24h",
+      "Caução de R$ 500",
     ],
-    highlight: true,
     cta: "Assinar plano mensal",
   },
   {
-    name: "Assinatura",
-    description: "Tenha um carro novo sem entrada e sem dor de cabeça.",
-    priceLabel: "R$ 1.890",
-    unit: "/mês",
+    name: "Fidelidade",
+    description: "Alugue e, ao final do contrato, o veículo é transferido para você.",
+    priceLabel: brl(FIDELIDADE.carro.diaria),
+    pricePrefix: "carro a partir de",
+    unit: "/dia",
     features: [
-      "Contrato de 12 a 36 meses",
-      "Documentação e IPVA inclusos",
-      "Troca de veículo programada",
-      "Seguro completo incluso",
+      "O veículo fica seu ao final do contrato",
+      "Carro (ex.: Polo Track, 48 meses) — caução R$ 7.000",
+      `Moto CG 160 Start a partir de ${brl(FIDELIDADE.moto[0].semanal)}/sem`,
+      "Documentação, seguro e assistência inclusos",
     ],
-    cta: "Quero assinar",
+    highlight: true,
+    tag: "O veículo fica seu",
+    naSecao: true,
+    cta: "Quero o plano Fidelidade",
   },
 ];
 
@@ -155,8 +245,8 @@ export type Feature = {
 export const FEATURES: Feature[] = [
   {
     icon: "ShieldCheck",
-    title: "Seguro incluso",
-    text: "Todos os planos acompanham cobertura para você rodar tranquilo.",
+    title: "Proteção inclusa",
+    text: "Cobertura para danos ao veículo e a terceiros em todos os planos.",
   },
   {
     icon: "CalendarClock",
@@ -171,17 +261,17 @@ export const FEATURES: Feature[] = [
   {
     icon: "FileCheck2",
     title: "Sem burocracia",
-    text: "Reserva ágil, contrato digital e retirada no mesmo dia.",
+    text: "Cadastro pelo chat em minutos e retirada no mesmo dia.",
   },
   {
     icon: "Store",
-    title: "Retirada ágil na loja",
-    text: "Processo rápido e sem espera na nossa loja, no Distrito Industrial.",
+    title: "Retirada sem agendamento",
+    text: "Nada de marcar horário: confirmou a disponibilidade, é só retirar na loja.",
   },
   {
     icon: "Wrench",
-    title: "Manutenção em dia",
-    text: "Frota revisada e higienizada antes de cada locação.",
+    title: "Estrutura completa na sede",
+    text: "Oficina, borracharia, abastecimento e lavagem próprios — manutenção preventiva a cada 10 mil km.",
   },
 ];
 
@@ -193,15 +283,15 @@ export type Step = {
 export const STEPS: Step[] = [
   {
     title: "Escolha o veículo",
-    text: "Selecione entre compactos, sedans, SUVs ou motos da nossa frota.",
+    text: "Compactos, hatchs, sedans ou a CG 160 — encontre o ideal na nossa frota.",
   },
   {
-    title: "Reserve em minutos",
-    text: "Envie seus dados pelo WhatsApp ou pelo formulário e confirme.",
+    title: "Converse com o assistente",
+    text: "Nosso assistente virtual faz seu cadastro em minutos e envia os dados direto para a nossa equipe.",
   },
   {
-    title: "Retire e dirija",
-    text: "Retire o veículo na nossa loja, no Distrito Industrial, e caia na estrada.",
+    title: "Confirme no WhatsApp e retire",
+    text: "Você é redirecionado ao WhatsApp para confirmar e retira o veículo na loja — sem agendamento.",
   },
 ];
 
@@ -228,7 +318,7 @@ export const TESTIMONIALS: Testimonial[] = [
     name: "André Martins",
     role: "Turista",
     quote:
-      "Passei uma semana em Manaus e aluguei um SUV. Retirada rápida na loja e atendimento nota 10.",
+      "Passei uma semana em Manaus e aluguei um sedan. Retirada rápida na loja e atendimento nota 10.",
   },
 ];
 
@@ -239,24 +329,40 @@ export type Faq = {
 
 export const FAQS: Faq[] = [
   {
-    q: "Quais documentos preciso para alugar?",
-    a: "CNH válida, documento de identidade, comprovante de residência e um cartão de crédito para a caução. Para motoristas de aplicativo o processo é simplificado.",
+    q: "O que é preciso para alugar?",
+    a: "Para efetivar a locação é necessário o preenchimento do cadastro e a apresentação da CNH. Para motoristas de aplicativo: ter mais de 25 anos, CNH há pelo menos 2 anos com EAR (atividade remunerada), garagem apropriada e não possuir débitos em outras locadoras.",
   },
   {
-    q: "Qual a idade mínima para locação?",
-    a: "É necessário ter no mínimo 21 anos e pelo menos 2 anos de habilitação para a maioria das categorias.",
+    q: "Quais planos estão disponíveis?",
+    a: "Temos planos de locação por diária, mensal e por assinatura, além de planos semanais para motoristas de aplicativo (com caução na retirada) e o plano Fidelidade, em que o veículo é transferido para você ao final do contrato.",
   },
   {
-    q: "Posso usar o carro para trabalhar com aplicativo?",
-    a: "Sim! Temos planos específicos para motoristas de Uber, 99 e entregadores, com diárias e mensais que cabem no bolso.",
+    q: "Como funciona o plano Fidelidade?",
+    a: "No plano Fidelidade, ao final do contrato o veículo (carro ou moto) é transferido ao locatário — você paga pelo que será seu. Consulte nossa equipe para as condições e prazos.",
   },
   {
-    q: "O seguro está incluso?",
-    a: "Todos os planos contam com cobertura. Você também pode contratar proteções adicionais para rodar com ainda mais tranquilidade.",
+    q: "Preciso agendar a retirada?",
+    a: "Não. A MCM não trabalha com agendamento de retirada: você faz o cadastro pelo chat do site ou pelo WhatsApp, nossa equipe confirma a disponibilidade e você retira o veículo direto na loja, no Distrito Industrial.",
   },
   {
-    q: "Onde retiro e devolvo o veículo?",
-    a: "A retirada e a devolução são sempre na nossa loja, no Distrito Industrial, em Manaus/AM. Processo rápido e sem burocracia.",
+    q: "Na locação para aplicativo tem km livre?",
+    a: "Não. Os planos para motoristas de app têm franquias de 1250, 1500 ou 1750 km por semana. A apuração da quilometragem é feita a cada 4 semanas e o excedente, quando houver, é cobrado por fatura/boleto.",
+  },
+  {
+    q: "Como posso pagar a locação?",
+    a: "Aceitamos PIX, cartão de débito, crédito ou transferência. O depósito da caução pode ser parcelado em até 12x no cartão de crédito (com juros) e as renovações semanais são pagas por boleto.",
+  },
+  {
+    q: "Em quanto tempo a caução é devolvida?",
+    a: "A caução é devolvida em 15 dias após o encerramento do contrato, descontados eventuais débitos remanescentes.",
+  },
+  {
+    q: "Como funciona a manutenção?",
+    a: "As manutenções preventivas (a cada 10 mil km) e corretivas por desgaste natural são feitas pela locadora, na nossa oficina própria. Manutenções por mau uso ficam por conta do cliente.",
+  },
+  {
+    q: "Como funciona a proteção?",
+    a: "A proteção cobre danos ao veículo e a terceiros, com coparticipação obrigatória. Em caso de sinistro são necessários Boletim de Ocorrência, fotos e CNH dos envolvidos.",
   },
 ];
 

@@ -1,28 +1,15 @@
 import { useState } from "react";
-import { Star, CheckCircle2, MapPin, Car, ArrowRight } from "lucide-react";
-import { COMPANY, FLEET, WHATSAPP } from "@/lib/data";
+import { Star, CheckCircle2, MapPin, Car, ArrowRight, MessageSquare } from "lucide-react";
+import { COMPANY, CATEGORIES, WHATSAPP } from "@/lib/data";
+import { abrirChat } from "@/lib/chatbot";
 import { asset } from "@/lib/asset";
-import DateField from "@/components/DateField";
-
-/** ISO yyyy-mm-dd -> dd/mm/aaaa, com fallback "a combinar" quando vazio. */
-const fmtBR = (iso: string) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : "a combinar";
-};
 
 export default function Hero() {
-  const [form, setForm] = useState({
-    retirada: "",
-    devolucao: "",
-    categoria: FLEET[0].category,
-  });
+  const [categoria, setCategoria] = useState(CATEGORIES[0]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const msg = `Olá! Quero fazer uma reserva na MCM Rent a Car.%0A%0A• Retirada na loja (Distrito Industrial)%0A• Data de retirada: ${fmtBR(
-      form.retirada
-    )}%0A• Data de devolução: ${fmtBR(form.devolucao)}%0A• Categoria: ${form.categoria}`;
-    window.open(`https://wa.me/${COMPANY.phoneRaw}?text=${msg}`, "_blank");
+    abrirChat({ categoria });
   };
 
   return (
@@ -52,7 +39,7 @@ export default function Hero() {
 
           <p className="mt-5 text-lg leading-relaxed text-white/80">
             Aluguel de carros e motos com agilidade e sem burocracia. Para o seu dia a dia,
-            sua viagem ou para trabalhar com aplicativo — escolha, reserve e dirija.
+            sua viagem ou para trabalhar com aplicativo — escolha, cadastre-se e dirija.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -74,14 +61,14 @@ export default function Hero() {
           </ul>
         </div>
 
-        {/* Booking card */}
+        {/* Card de atendimento imediato */}
         <form
           onSubmit={handleSubmit}
           className="w-full rounded-2xl border border-white/10 bg-white p-6 shadow-card sm:p-7"
         >
           <h3 className="font-display text-xl font-bold text-charcoal">Reserve em 1 minuto</h3>
           <p className="mt-1 text-sm text-charcoal/60">
-            Confirme a disponibilidade direto no WhatsApp.
+            Nosso assistente faz seu cadastro e te leva direto para o WhatsApp da loja.
           </p>
 
           <div className="mt-5 space-y-4">
@@ -91,42 +78,30 @@ export default function Hero() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-charcoal/55">
                   Retirada e devolução
                 </p>
-                <p className="text-sm font-medium text-charcoal">Na nossa loja — Distrito Industrial</p>
+                <p className="text-sm font-medium text-charcoal">
+                  Na nossa loja — sem agendamento
+                </p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <DateField
-                label="Retirada"
-                value={form.retirada}
-                onChange={(iso) => setForm({ ...form, retirada: iso })}
-              />
-              <DateField
-                label="Devolução"
-                value={form.devolucao}
-                min={form.retirada || undefined}
-                onChange={(iso) => setForm({ ...form, devolucao: iso })}
-              />
             </div>
 
             <Field label="Categoria" icon={<Car className="h-4 w-4" />}>
               <select
-                value={form.categoria}
-                onChange={(e) => setForm({ ...form, categoria: e.target.value })}
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
                 className="input"
               >
-                {FLEET.map((v) => (
-                  <option key={v.category}>{v.category}</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c}>{c}</option>
                 ))}
               </select>
             </Field>
           </div>
 
           <button type="submit" className="btn-primary mt-6 w-full text-base">
-            Solicitar reserva <ArrowRight className="h-4 w-4" />
+            Iniciar cadastro no chat <MessageSquare className="h-4 w-4" />
           </button>
           <p className="mt-3 text-center text-xs text-charcoal/50">
-            Resposta rápida • Sem compromisso
+            Resposta rápida • Sem compromisso • Seus dados vão direto para a equipe
           </p>
         </form>
       </div>

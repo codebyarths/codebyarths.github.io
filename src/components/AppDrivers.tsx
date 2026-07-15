@@ -4,11 +4,12 @@ import { asset } from "@/lib/asset";
 import Reveal from "./Reveal";
 
 const BENEFITS = [
-  "Planos diários e semanais que cabem no bolso",
-  "Carros econômicos prontos para Uber e 99",
-  "Manutenção e troca de óleo por nossa conta",
-  "Sem comprovação de renda complicada",
-  "Carro reserva se o seu precisar de revisão",
+  "Planos semanais com franquias de 1250, 1500 ou 1750 km",
+  "Carros aceitos nas principais categorias de app",
+  "Caução parcelável em até 12x no cartão",
+  "Manutenção preventiva na nossa oficina própria",
+  "Oficina, borracharia, abastecimento e lavagem na sede",
+  "Plano Fidelidade: o carro fica seu ao final do contrato",
 ];
 
 export default function AppDrivers() {

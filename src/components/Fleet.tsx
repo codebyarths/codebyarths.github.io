@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Users, Cog, Fuel, ArrowRight } from "lucide-react";
-import { FLEET, COMPANY } from "@/lib/data";
+import { Users, Cog, Fuel, MessageSquare, ListChecks } from "lucide-react";
+import { FLEET, GRUPOS, precoCard, type Vehicle } from "@/lib/data";
+import { abrirChat, abrirPlanos } from "@/lib/chatbot";
 import { asset } from "@/lib/asset";
 import Reveal from "./Reveal";
 
@@ -10,10 +11,8 @@ export default function Fleet() {
   const [active, setActive] = useState("Todos");
   const list = active === "Todos" ? FLEET : FLEET.filter((v) => v.category === active);
 
-  const reserve = (name: string, category: string) => {
-    const msg = `Olá! Tenho interesse no veículo ${name} (${category}). Pode me passar a disponibilidade?`;
-    window.open(`https://wa.me/${COMPANY.phoneRaw}?text=${encodeURIComponent(msg)}`, "_blank");
-  };
+  // Interesse no veículo abre o assistente virtual com o modelo já selecionado.
+  const interesse = (v: Vehicle) => abrirChat({ veiculo: v.short });
 
   return (
     <section id="frota" className="section bg-neutral-50">
@@ -24,8 +23,8 @@ export default function Fleet() {
             Escolha o veículo ideal para cada momento
           </h2>
           <p className="mt-4 text-charcoal/60">
-            Carros novos, revisados e higienizados. Do compacto econômico ao SUV premium,
-            mais motos para quem trabalha na rua.
+            Carros novos, revisados e higienizados. Do compacto econômico ao sedan completo,
+            mais a CG 160 para quem trabalha na rua.
           </p>
         </Reveal>
 
@@ -66,6 +65,9 @@ export default function Fleet() {
                       {v.badge}
                     </span>
                   )}
+                  <span className="absolute right-3 top-4 rounded-full bg-black/40 px-2.5 py-0.5 text-[10px] font-medium text-white/85 backdrop-blur-sm">
+                    Imagem ilustrativa
+                  </span>
                   <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-4 pb-3 pt-8 text-xs font-medium uppercase tracking-wider text-white/90">
                     {v.category}
                   </span>
@@ -80,19 +82,41 @@ export default function Fleet() {
                     <Spec icon={<Fuel className="h-4 w-4" />} label={v.fuel} />
                   </ul>
 
-                  <div className="mt-5 flex items-end justify-between border-t border-charcoal/10 pt-4">
-                    <div>
-                      <p className="text-xs text-charcoal/50">a partir de</p>
-                      <p className="font-display text-2xl font-extrabold text-charcoal">
-                        R$ {v.pricePerDay}
-                        <span className="text-sm font-medium text-charcoal/50">/dia</span>
-                      </p>
-                    </div>
+                  <div className="mt-5 border-t border-charcoal/10 pt-4">
+                    {(() => {
+                      const p = precoCard(v);
+                      return (
+                        <>
+                          <div className="mb-1 flex items-end justify-between">
+                            <div>
+                              <p className="text-[11px] text-charcoal/50">a partir de</p>
+                              <p className="font-display text-2xl font-extrabold leading-none text-charcoal">
+                                {p.value}
+                                <span className="text-sm font-medium text-charcoal/50">{p.unit}</span>
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-brand/10 px-2.5 py-1 text-[11px] font-semibold text-brand-700">
+                              {p.note}
+                            </span>
+                          </div>
+                          <p className="mb-3 text-[11px] text-charcoal/45">
+                            Caução {new Intl.NumberFormat("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            }).format(GRUPOS[v.group].caucao)}
+                          </p>
+                        </>
+                      );
+                    })()}
+                    <button onClick={() => interesse(v)} className="btn-primary w-full py-2.5">
+                      Tenho interesse <MessageSquare className="h-4 w-4" />
+                    </button>
                     <button
-                      onClick={() => reserve(v.name, v.category)}
-                      className="btn-primary px-5 py-2.5"
+                      onClick={() => abrirPlanos({ grupo: v.group })}
+                      className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full py-2 text-xs font-semibold text-brand-700 transition hover:text-brand"
                     >
-                      Reservar <ArrowRight className="h-4 w-4" />
+                      <ListChecks className="h-4 w-4" />
+                      Ver planos e franquias
                     </button>
                   </div>
                 </div>
@@ -100,6 +124,14 @@ export default function Fleet() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal className="mt-8 text-center">
+          <p className="mx-auto max-w-2xl text-sm text-charcoal/55">
+            Carros em planos semanais para motoristas de app (franquia a partir de 1.250 km/sem);
+            moto CG 160 a partir de R$ 55/dia. Sem agendamento de retirada — faça seu cadastro
+            com o assistente e retire na loja assim que a disponibilidade for confirmada.
+          </p>
+        </Reveal>
       </div>
     </section>
   );

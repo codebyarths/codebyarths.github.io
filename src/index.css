@@ -9,9 +9,16 @@
 
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: calc(84px + env(safe-area-inset-top));
     /* Fundo escuro no topo/overscroll → ajuda o Safari a pintar a status bar de escuro */
     background-color: #121212;
+  }
+
+  /* Enquadramento das âncoras sob o header fixo (72px + safe-area, com folga).
+     Usamos scroll-margin-top no alvo (e NÃO scroll-padding-top no html) porque
+     o iOS Safari ignora o scroll-padding em navegação por âncora — e porque os
+     dois se somariam, dobrando o espaço. */
+  section[id] {
+    scroll-margin-top: calc(84px + env(safe-area-inset-top));
   }
 
   body {

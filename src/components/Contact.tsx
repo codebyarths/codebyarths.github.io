@@ -1,19 +1,15 @@
-import { useState } from "react";
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle2 } from "lucide-react";
-import { COMPANY } from "@/lib/data";
+import { Phone, Mail, MapPin, Clock, MessageSquare, ArrowRight, Bot } from "lucide-react";
+import { COMPANY, WHATSAPP } from "@/lib/data";
+import { abrirChat } from "@/lib/chatbot";
 import Reveal from "./Reveal";
 
+const PASSOS = [
+  "Responda algumas perguntas rápidas no chat",
+  "Seus dados vão direto para a nossa equipe",
+  "Você é levado ao WhatsApp para confirmar",
+];
+
 export default function Contact() {
-  const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ nome: "", telefone: "", mensagem: "" });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const msg = `Olá, meu nome é ${form.nome}.%0ATelefone: ${form.telefone}%0A%0A${form.mensagem}`;
-    window.open(`https://wa.me/${COMPANY.phoneRaw}?text=${msg}`, "_blank");
-    setSent(true);
-  };
-
   const infos = [
     { icon: Phone, label: "Telefone / WhatsApp", value: COMPANY.phone, href: `tel:+${COMPANY.phoneRaw}` },
     { icon: Mail, label: "E-mail", value: COMPANY.email, href: `mailto:${COMPANY.email}` },
@@ -43,7 +39,7 @@ export default function Contact() {
                   <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
                     <Icon className="h-5 w-5" />
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wide text-charcoal/45">
                       {info.label}
                     </p>
@@ -63,67 +59,40 @@ export default function Contact() {
           <p className="mt-5 text-xs text-charcoal/45">CNPJ: {COMPANY.cnpj}</p>
         </Reveal>
 
-        {/* Form */}
+        {/* Solicite um orçamento — pelo assistente do chat */}
         <Reveal delay={120}>
-          <div className="rounded-2xl bg-white p-7 shadow-card ring-1 ring-charcoal/5 sm:p-9">
-            {sent ? (
-              <div className="flex h-full min-h-[380px] flex-col items-center justify-center text-center">
-                <CheckCircle2 className="h-16 w-16 text-brand" />
-                <h3 className="mt-4 font-display text-xl font-bold text-charcoal">
-                  Quase lá!
-                </h3>
-                <p className="mt-2 max-w-xs text-sm text-charcoal/60">
-                  Abrimos o WhatsApp com sua mensagem. É só enviar que retornamos rapidinho.
-                </p>
-                <button onClick={() => setSent(false)} className="btn-ghost mt-6">
-                  Enviar outra mensagem
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <h3 className="font-display text-xl font-bold text-charcoal">Solicite um orçamento</h3>
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-charcoal/55">
-                    Nome
+          <div className="flex h-full flex-col justify-center rounded-2xl bg-ink p-7 text-white shadow-card sm:p-9">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-grad">
+              <Bot className="h-6 w-6" />
+            </div>
+            <h3 className="mt-5 font-display text-2xl font-bold">Solicite um orçamento</h3>
+            <p className="mt-2 text-white/70">
+              Faça seu pedido pelo nosso assistente virtual — é rapidinho e sem formulário. Ele
+              cuida de tudo e te conecta com a equipe.
+            </p>
+
+            <ul className="mt-6 space-y-3">
+              {PASSOS.map((p, i) => (
+                <li key={p} className="flex items-start gap-3 text-sm text-white/85">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-grad text-xs font-bold text-white">
+                    {i + 1}
                   </span>
-                  <input
-                    required
-                    value={form.nome}
-                    onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                    className="input"
-                    placeholder="Seu nome completo"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-charcoal/55">
-                    Telefone
-                  </span>
-                  <input
-                    required
-                    value={form.telefone}
-                    onChange={(e) => setForm({ ...form, telefone: e.target.value })}
-                    className="input"
-                    placeholder="(92) 9 0000-0000"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-charcoal/55">
-                    Mensagem
-                  </span>
-                  <textarea
-                    required
-                    rows={4}
-                    value={form.mensagem}
-                    onChange={(e) => setForm({ ...form, mensagem: e.target.value })}
-                    className="input resize-none"
-                    placeholder="Conte qual veículo e período você precisa."
-                  />
-                </label>
-                <button type="submit" className="btn-primary w-full text-base">
-                  Enviar pelo WhatsApp <Send className="h-4 w-4" />
-                </button>
-              </form>
-            )}
+                  {p}
+                </li>
+              ))}
+            </ul>
+
+            <button onClick={() => abrirChat()} className="btn-primary mt-8 w-full text-base">
+              Solicitar orçamento no chat <MessageSquare className="h-4 w-4" />
+            </button>
+            <a
+              href={WHATSAPP}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 flex items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold text-white/70 transition hover:text-brand"
+            >
+              Prefiro falar direto no WhatsApp <ArrowRight className="h-4 w-4" />
+            </a>
           </div>
         </Reveal>
       </div>
