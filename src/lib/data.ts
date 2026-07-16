@@ -11,7 +11,7 @@ export const COMPANY = {
   email: "contato@mcmrentacar.com.br",
   address: "Av. Rodrigo Otávio, 2890 - Sala 11, Distrito Industrial, Manaus/AM",
   cnpj: "03.360.950/0001-15",
-  hours: "Seg a Sex: 8h às 18h • Sáb: 8h às 12h • Suporte 24h",
+  hours: "Seg a Sex: 8h às 18h • Sáb e Dom: fechado • Suporte 24h",
 };
 
 export const WHATSAPP = `https://wa.me/${COMPANY.phoneRaw}?text=${encodeURIComponent(
@@ -49,14 +49,14 @@ export type Vehicle = {
 export const FLEET: Vehicle[] = [
   // Compactos — Grupo C
   { category: "Compactos", name: "Fiat Mobi", short: "Mobi", image: "/brand/vehicles/mobi.jpg", group: "C", seats: 5, transmission: "Manual", fuel: "Flex", badge: "Mais econômico" },
-  { category: "Compactos", name: "Renault Kwid", short: "Kwid", image: "/brand/vehicles/kwid.png", group: "C", seats: 5, transmission: "Manual", fuel: "Flex" },
+  { category: "Compactos", name: "Renault Kwid", short: "Kwid", image: "/brand/vehicles/kwid.jpg", group: "C", seats: 5, transmission: "Manual", fuel: "Flex" },
   // Hatchs — Grupo D
   { category: "Hatchs", name: "Fiat Argo", short: "Argo", image: "/brand/vehicles/argo.jpg", group: "D", seats: 5, transmission: "Manual", fuel: "Flex" },
-  { category: "Hatchs", name: "Hyundai HB20", short: "HB20", image: "/brand/vehicles/hb20.png", group: "D", seats: 5, transmission: "Manual", fuel: "Flex" },
+  { category: "Hatchs", name: "Hyundai HB20", short: "HB20", image: "/brand/vehicles/hb20.jpg", group: "D", seats: 5, transmission: "Manual", fuel: "Flex" },
   { category: "Hatchs", name: "Chevrolet Onix", short: "Onix", image: "/brand/vehicles/onix.jpg", group: "D", seats: 5, transmission: "Manual", fuel: "Flex", badge: "Mais alugado", highlight: true },
   { category: "Hatchs", name: "VW Polo", short: "Polo", image: "/brand/vehicles/polo.jpg", group: "D", seats: 5, transmission: "Manual", fuel: "Flex", badge: "Conforto" },
   // Sedans — Grupo DS
-  { category: "Sedans", name: "Hyundai HB20S", short: "HB20S", image: "/brand/vehicles/hb20s.png", group: "DS", seats: 5, transmission: "Automático", fuel: "Flex" },
+  { category: "Sedans", name: "Hyundai HB20S", short: "HB20S", image: "/brand/vehicles/hb20s.jpg", group: "DS", seats: 5, transmission: "Automático", fuel: "Flex" },
   { category: "Sedans", name: "Chevrolet Onix Plus", short: "Onix Plus", image: "/brand/vehicles/onix-plus.jpg", group: "DS", seats: 5, transmission: "Automático", fuel: "Flex" },
   { category: "Sedans", name: "Fiat Cronos", short: "Cronos", image: "/brand/vehicles/cronos.jpg", group: "DS", seats: 5, transmission: "Automático", fuel: "Flex", badge: "Porta-malas grande" },
   // Moto
@@ -184,6 +184,7 @@ export const PLANS: Plan[] = [
     unit: "/sem",
     features: [
       "Franquias de 1.250, 1.500 ou 1.750 km/semana",
+      "Período mínimo de 4 semanas",
       "Compactos, hatchs e sedans aceitos nas categorias de app",
       "Caução de R$ 1.600 parcelável em até 12x",
       "Renovação semanal por boleto",

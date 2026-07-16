@@ -202,7 +202,7 @@ export const INTENTS: Intent[] = [
     ],
     answer: `Temos planos especiais para **motoristas de aplicativo** (Uber, 99 e entregadores)! 🚀\n\nPlanos **semanais** com franquia de km:\n${precosCarros}\n\n🏍️ CG 160 Start para entregas: ${brl(
       MOTO_PRECOS.semanal
-    )}/sem.\n\n• Carros aceitos nas principais categorias de app\n• Caução de ${brl(
+    )}/sem.\n\n• Período mínimo de **4 semanas**\n• Carros aceitos nas principais categorias de app\n• Caução de ${brl(
       GRUPOS.C.caucao
     )} parcelável em até 12x\n• Manutenção e oficina própria por nossa conta\n\nRequisitos: mais de 25 anos e CNH há 2+ anos com EAR. Quer fazer seu cadastro?`,
     suggestions: ["Quero alugar", "Preços", "Falar no WhatsApp"],
@@ -417,10 +417,18 @@ export type CadastroStep = {
   options?: string[] | ((data: CadastroData) => string[]);
   inputMode?: "text" | "tel" | "email" | "numeric";
   /** Normaliza o valor antes de salvar (ex.: formatar CPF / data). */
-  transform?: (v: string) => string;
+  transform?: (v: string, data: CadastroData) => string;
   /** Se retornar true, o passo é pulado (ex.: período já implícito pelo plano). */
   skip?: (data: CadastroData) => boolean;
-  validate?: (v: string) => string | null;
+  validate?: (v: string, data: CadastroData) => string | null;
+  /**
+   * Hook assíncrono após a validação (ex.: buscar CEP na API). Pode devolver
+   * um erro (re-pergunta) ou um patch de dados a mesclar no cadastro.
+   */
+  resolve?: (
+    valor: string,
+    data: CadastroData
+  ) => Promise<{ patch?: CadastroData; erro?: string }>;
 };
 
 const soDigitos = (v: string) => v.replace(/\D/g, "");
@@ -432,6 +440,55 @@ const fmtCPF = (v: string) =>
 /** Formata data: 25121990 -> 25/12/1990. */
 const fmtData = (v: string) =>
   soDigitos(v).slice(0, 8).replace(/(\d{2})(\d{2})(\d{4})/, "$1/$2/$3");
+
+/** Formata CEP: 69000000 -> 69000-000. */
+const fmtCEP = (v: string) => soDigitos(v).slice(0, 8).replace(/(\d{5})(\d{3})/, "$1-$2");
+
+/** true quando a resposta significa "não" (para campos opcionais). */
+const respostaNao = (v?: string) => !v || norm(v) === "nao" || norm(v) === "nao.";
+
+/** Busca o CEP na ViaCEP. Erro de CEP inexistente re-pergunta; falha de rede cai no manual. */
+async function buscaCEP(valor: string): Promise<{ patch?: CadastroData; erro?: string }> {
+  const cep = soDigitos(valor);
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    if (!r.ok) throw new Error("http");
+    const j = (await r.json()) as {
+      erro?: boolean;
+      logradouro?: string;
+      bairro?: string;
+      localidade?: string;
+      uf?: string;
+    };
+    if (j.erro) return { erro: "Não encontrei esse CEP 🤔. Pode conferir os números?" };
+    return {
+      patch: {
+        logradouro: j.logradouro ?? "",
+        bairro: j.bairro ?? "",
+        cidade: j.localidade ?? "",
+        uf: j.uf ?? "",
+      },
+    };
+  } catch {
+    // API fora do ar → segue para o endereço digitado manualmente.
+    return { patch: { cepFalhou: "1" } };
+  }
+}
+
+/** Endereço detectado pelo CEP, para a mensagem de confirmação. */
+function enderecoBase(d: CadastroData): string {
+  const cidadeUf = [d.cidade, d.uf].filter(Boolean).join("/");
+  return [d.logradouro, d.bairro, cidadeUf].filter(Boolean).join(", ") || "(endereço não detalhado)";
+}
+
+/** Endereço final montado (CEP + número + complemento, ou o digitado manualmente). */
+export function enderecoFinal(d: CadastroData): string {
+  if (d.enderecoManual) return d.enderecoManual;
+  const ruaNum = [d.logradouro, d.numero].filter(Boolean).join(", ");
+  const compl = respostaNao(d.complemento) ? "" : d.complemento;
+  const cidadeUf = [d.cidade, d.uf].filter(Boolean).join("/");
+  return [ruaNum, compl, d.bairro, cidadeUf].filter(Boolean).join(", ");
+}
 
 /** Valida CPF com dígitos verificadores. */
 function validaCPF(v: string): string | null {
@@ -523,10 +580,48 @@ export const CADASTRO_STEPS: CadastroStep[] = [
         : "Esse e-mail não parece válido. Pode conferir? ✉️",
   },
   {
-    key: "endereco",
-    label: "Endereço",
+    key: "cep",
+    label: "CEP",
+    question: "Qual o **CEP** do seu endereço? (só números) 📮",
+    type: "text",
+    inputMode: "numeric",
+    transform: fmtCEP,
+    validate: (v) => (soDigitos(v).length !== 8 ? "O CEP deve ter 8 dígitos." : null),
+    resolve: (v) => buscaCEP(v),
+  },
+  {
+    key: "cepConfirma",
+    label: "Confirmar endereço",
+    // Só aparece quando o CEP foi encontrado.
+    skip: (d) => d.cepFalhou === "1",
+    question: (d) =>
+      `Encontrei este endereço pelo CEP:\n\n📍 **${enderecoBase(d)}**\n\nÉ esse mesmo?`,
+    type: "options",
+    options: ["Sim, é esse", "Não, digitar outro"],
+  },
+  {
+    key: "numero",
+    label: "Número",
+    // Só quando o CEP foi confirmado.
+    skip: (d) => d.cepFalhou === "1" || (d.cepConfirma ?? "").startsWith("Não"),
+    question: "Qual o **número**? (se não tiver, digite S/N)",
+    type: "text",
+    validate: (v) => (v.trim().length < 1 ? "Me diga o número, por favor." : null),
+  },
+  {
+    key: "complemento",
+    label: "Complemento",
+    skip: (d) => d.cepFalhou === "1" || (d.cepConfirma ?? "").startsWith("Não"),
     question:
-      "Qual o seu **endereço completo**? (rua, número, bairro e cidade)",
+      "Algum **complemento**? (apto, bloco, ponto de referência) Se não tiver, digite *não*.",
+    type: "text",
+  },
+  {
+    key: "enderecoManual",
+    label: "Endereço",
+    // Aparece quando o CEP falhou ou o cliente disse que não é o endereço.
+    skip: (d) => d.cepFalhou !== "1" && (d.cepConfirma ?? "").startsWith("Sim"),
+    question: "Sem problema! Digite seu **endereço completo** (rua, número, bairro e cidade).",
     type: "text",
     validate: (v) =>
       v.trim().length < 8 ? "Digite o endereço completo (rua, número, bairro e cidade)." : null,
@@ -570,12 +665,30 @@ export const CADASTRO_STEPS: CadastroStep[] = [
     skip: (d) => d.plano === "Mensal" || d.plano === "Fidelidade",
     question: (d) => {
       if (d.plano === "Diária") return "Quantas **diárias** você pretende? (ex: 3)";
-      if (typeof d.plano === "string" && d.plano.startsWith("Semanal"))
-        return "Por **quantas semanas** pretende alugar? (ex: 2)";
+      if ((d.plano ?? "").startsWith("Semanal"))
+        return "Por **quantas semanas** pretende alugar? (mínimo de 4 semanas — ex: 4)";
       return "Por quanto **tempo** pretende alugar? (ex: 3 diárias, 1 semana)";
     },
     type: "text",
-    validate: (v) => (v.trim().length < 1 ? "Me diga o período, por favor." : null),
+    validate: (v, d) => {
+      if (v.trim().length < 1) return "Me diga o período, por favor.";
+      // Plano Semanal — App exige período mínimo de 4 semanas.
+      if ((d.plano ?? "").startsWith("Semanal")) {
+        const n = parseInt(soDigitos(v), 10);
+        if (isNaN(n) || n < 4)
+          return "Para o plano **Semanal — App**, o período mínimo é de **4 semanas**. 😉 Por quantas semanas quer alugar?";
+      }
+      return null;
+    },
+    // Se digitar só o número, guarda bonitinho ("4" -> "4 semanas" / "3 diárias").
+    transform: (v, d) => {
+      const t = v.trim();
+      if (/^\d+$/.test(t)) {
+        if ((d.plano ?? "").startsWith("Semanal")) return `${Number(t)} semanas`;
+        if (d.plano === "Diária") return `${Number(t)} diárias`;
+      }
+      return t;
+    },
   },
   {
     key: "obs",
@@ -620,7 +733,8 @@ export function cadastroToWhats(d: CadastroData): string {
     `*Estado civil:* ${d.estadoCivil}`,
     `*WhatsApp:* ${d.telefone}`,
     `*E-mail:* ${d.email}`,
-    `*Endereço:* ${d.endereco}`,
+    `*CEP:* ${d.cep ?? "—"}`,
+    `*Endereço:* ${enderecoFinal(d)}`,
     `*Possui CNH:* ${d.cnh}`,
     `*Categoria:* ${d.categoria}`,
     `*Veículo:* ${d.veiculo}`,
@@ -642,7 +756,8 @@ export function cadastroToEmail(d: CadastroData): Record<string, string> {
     "Estado civil": d.estadoCivil ?? "",
     WhatsApp: d.telefone ?? "",
     "E-mail": d.email ?? "",
-    Endereço: d.endereco ?? "",
+    CEP: d.cep ?? "—",
+    Endereço: enderecoFinal(d),
     "Possui CNH": d.cnh ?? "",
     Categoria: d.categoria ?? "",
     Veículo: d.veiculo ?? "",
@@ -668,7 +783,7 @@ export function cadastroResumo(d: CadastroData): string {
     `• **Estado civil:** ${d.estadoCivil}`,
     `• **WhatsApp:** ${d.telefone}`,
     `• **E-mail:** ${d.email}`,
-    `• **Endereço:** ${d.endereco}`,
+    `• **Endereço:** ${enderecoFinal(d)}`,
     `• **Possui CNH:** ${d.cnh}`,
     `• **Categoria:** ${d.categoria}`,
     `• **Veículo:** ${d.veiculo}`,

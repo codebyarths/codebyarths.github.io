@@ -47,8 +47,52 @@ export default function ChatBot() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
   const dataRef = useRef<CadastroData>({});
   dataRef.current = data;
+
+  // Mobile: chat em tela cheia + ajuste à área visível quando o teclado abre.
+  // Sem isso, o teclado "empurra" a janela fixa para fora da tela (perde o input).
+  useEffect(() => {
+    if (!open) return;
+    const el = windowRef.current;
+    const vv = window.visualViewport;
+    if (!el) return;
+
+    const ajusta = () => {
+      // Só interfere no mobile E com o teclado aberto (área visível bem menor
+      // que a janela). Sem teclado, o CSS (inset-0) cuida do layout sozinho.
+      const tecladoAberto = !!vv && vv.height < window.innerHeight - 80;
+      if (window.innerWidth >= 640 || !vv || !tecladoAberto) {
+        el.style.height = "";
+        el.style.transform = "";
+        return;
+      }
+      // Altura visível real (desconta o teclado) + compensa o "pan" do iOS.
+      el.style.height = `${vv.height}px`;
+      el.style.transform = `translateY(${vv.offsetTop}px)`;
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    };
+
+    ajusta();
+    vv?.addEventListener("resize", ajusta);
+    vv?.addEventListener("scroll", ajusta);
+    window.addEventListener("resize", ajusta);
+
+    // Trava o scroll da página atrás do chat (só no mobile/tela cheia).
+    const eraMobile = window.innerWidth < 640;
+    const overflowAnterior = document.body.style.overflow;
+    if (eraMobile) document.body.style.overflow = "hidden";
+
+    return () => {
+      vv?.removeEventListener("resize", ajusta);
+      vv?.removeEventListener("scroll", ajusta);
+      window.removeEventListener("resize", ajusta);
+      el.style.height = "";
+      el.style.transform = "";
+      if (eraMobile) document.body.style.overflow = overflowAnterior;
+    };
+  }, [open]);
 
   // Teaser: aparece após alguns segundos e some sozinho (uma única vez).
   useEffect(() => {
@@ -155,15 +199,36 @@ export default function ChatBot() {
     });
   };
 
-  const handleCadastro = (text: string) => {
+  const handleCadastro = async (text: string) => {
     const current = CADASTRO_STEPS[step];
-    const err = current.validate?.(text);
+    const err = current.validate?.(text, dataRef.current);
     if (err) {
       botSay(err, stepOptions(current, dataRef.current));
       return;
     }
-    const valor = current.transform ? current.transform(text.trim()) : text.trim();
-    const updated = { ...dataRef.current, [current.key]: valor };
+    const valor = current.transform
+      ? current.transform(text.trim(), dataRef.current)
+      : text.trim();
+    let patch: CadastroData = { [current.key]: valor };
+
+    // Hook assíncrono (ex.: buscar CEP na ViaCEP) com "digitando..." durante a consulta.
+    if (current.resolve) {
+      setTyping(true);
+      let resultado: { patch?: CadastroData; erro?: string };
+      try {
+        resultado = await current.resolve(valor, dataRef.current);
+      } catch {
+        resultado = {};
+      }
+      setTyping(false);
+      if (resultado.erro) {
+        botSay(resultado.erro, stepOptions(current, dataRef.current));
+        return;
+      }
+      if (resultado.patch) patch = { ...patch, ...resultado.patch };
+    }
+
+    const updated = { ...dataRef.current, ...patch };
     setData(updated);
     const next = proximoPasso(updated, step + 1);
     if (next === -1) {
@@ -239,11 +304,14 @@ export default function ChatBot() {
 
   return (
     <>
-      {/* Janela do chat */}
+      {/* Janela do chat — tela cheia no mobile; flutuante no desktop */}
       {open && (
-        <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-5 z-50 flex h-[min(620px,calc(100vh-8rem))] w-[min(384px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-charcoal/10 bg-white shadow-2xl sm:right-6">
+        <div
+          ref={windowRef}
+          className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white sm:inset-auto sm:bottom-[calc(6rem+env(safe-area-inset-bottom))] sm:right-6 sm:h-[min(620px,calc(100vh-8rem))] sm:w-[min(384px,calc(100vw-2.5rem))] sm:rounded-2xl sm:border sm:border-charcoal/10 sm:shadow-2xl"
+        >
           {/* Header */}
-          <div className="flex items-center justify-between bg-ink px-4 py-3.5 text-white">
+          <div className="flex items-center justify-between bg-ink px-4 pb-3.5 pt-[calc(0.875rem+env(safe-area-inset-top))] text-white sm:pt-3.5">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-grad">
@@ -329,7 +397,7 @@ export default function ChatBot() {
 
           {/* Rodapé: ação final do cadastro ou input */}
           {mode === "done" ? (
-            <div className="space-y-2 border-t border-charcoal/10 bg-white p-3">
+            <div className="space-y-2 border-t border-charcoal/10 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-3">
               <button onClick={enviarCadastroWhats} className="btn-primary w-full">
                 Continuar no WhatsApp <ExternalLink className="h-4 w-4" />
               </button>
@@ -341,7 +409,7 @@ export default function ChatBot() {
               </button>
             </div>
           ) : (
-            <div className="flex items-end gap-2 border-t border-charcoal/10 bg-white p-3">
+            <div className="flex items-end gap-2 border-t border-charcoal/10 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-3">
               <input
                 ref={inputRef}
                 value={input}
@@ -391,10 +459,12 @@ export default function ChatBot() {
         </div>
       )}
 
-      {/* Botão flutuante */}
+      {/* Botão flutuante (no mobile some enquanto o chat ocupa a tela toda) */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-brand-grad text-white shadow-glow transition hover:scale-105 sm:right-6"
+        className={`${
+          open ? "hidden sm:flex" : "flex"
+        } fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-50 h-16 w-16 items-center justify-center rounded-full bg-brand-grad text-white shadow-glow transition hover:scale-105 sm:right-6`}
         aria-label={open ? "Fechar chat" : "Abrir chat"}
       >
         {open ? (

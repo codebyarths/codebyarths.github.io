@@ -6,9 +6,10 @@
 
 import { COMPANY } from "./data";
 
-// ⚠️ MODO TESTE: destino dos leads. Para produção, deixe EMAIL_TESTE = ""
-// (aí usa COMPANY.email) e ajuste o "To Email" do template no EmailJS.
-const EMAIL_TESTE = "arthuriquesconta1@gmail.com";
+// PRODUÇÃO: leads vão para o e-mail oficial da loja (COMPANY.email =
+// contato@mcmrentacar.com.br, hospedado na Locaweb). Para voltar ao modo
+// teste, coloque um e-mail em EMAIL_TESTE (ex.: "arthuriquesconta1@gmail.com").
+const EMAIL_TESTE = "";
 const LEAD_EMAIL = EMAIL_TESTE || COMPANY.email;
 
 // Credenciais públicas do EmailJS (podem ficar no front — não são secretas).
