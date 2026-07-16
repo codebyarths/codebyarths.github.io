@@ -697,7 +697,20 @@ export const CADASTRO_STEPS: CadastroStep[] = [
       "Quer adicionar alguma **observação**? (dúvidas, uso para aplicativo, etc.) Se não, é só digitar *não*.",
     type: "text",
   },
+  {
+    key: "consentimento",
+    label: "Consentimento",
+    question:
+      "Por fim, nos termos da **LGPD** (Lei Geral de Proteção de Dados — Lei nº 13.709/2018): você concorda com a nossa [Política de Privacidade](/privacidade) e autoriza o **tratamento dos seus dados pessoais** para fins de cadastro e locação? 🔒",
+    type: "options",
+    options: ["Concordo", "Não concordo"],
+  },
 ];
+
+/** Resposta de consentimento aceita (LGPD). */
+export function consentiu(v?: string): boolean {
+  return !!v && norm(v).startsWith("concordo");
+}
 
 /** Resolve as opções de um passo (fixas ou dependentes das respostas anteriores). */
 export function stepOptions(step: CadastroStep, data: CadastroData): string[] | undefined {
@@ -744,6 +757,9 @@ export function cadastroToWhats(d: CadastroData): string {
   if (!semObs(d.obs)) {
     linhas.push(`*Observação:* ${d.obs}`);
   }
+  if (d.consentimentoEm) {
+    linhas.push(`*Consentimento (LGPD):* Sim — ${d.consentimentoEm}`);
+  }
   return linhas.join("\n");
 }
 
@@ -764,6 +780,7 @@ export function cadastroToEmail(d: CadastroData): Record<string, string> {
     Plano: d.plano ?? "",
     Período: d.periodo ?? "—",
     Observação: semObs(d.obs) ? "—" : d.obs!,
+    "Consentimento (LGPD)": d.consentimentoEm ? `Sim — ${d.consentimentoEm}` : "—",
   };
 }
 

@@ -101,7 +101,12 @@ export default function Footer() {
           <p>
             © {year} {COMPANY.name} • CNPJ {COMPANY.cnpj}
           </p>
-          <p>Todos os direitos reservados.</p>
+          <div className="flex items-center gap-4">
+            <a href="/privacidade" className="transition hover:text-brand">
+              Política de Privacidade
+            </a>
+            <span>Todos os direitos reservados.</span>
+          </div>
         </div>
       </div>
     </footer>

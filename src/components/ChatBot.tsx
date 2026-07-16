@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { MessageSquare, X, Send, RotateCcw, Bot, ExternalLink } from "lucide-react";
-import { FLEET } from "@/lib/data";
+import { FLEET, CATEGORIES } from "@/lib/data";
 import { enviarEmailLoja } from "@/lib/email";
 import {
   WELCOME,
@@ -18,6 +18,9 @@ import {
   stepOptions,
   stepQuestion,
   proximoPasso,
+  consentiu,
+  abrirChat,
+  norm,
   type CadastroData,
   type ChatOpenDetail,
 } from "@/lib/chatbot";
@@ -31,7 +34,9 @@ type Msg = {
 
 type Mode = "chat" | "cadastro" | "done";
 
-let idSeq = 1;
+// Base no relógio: IDs continuam únicos mesmo se o módulo recarregar (HMR)
+// com mensagens antigas ainda no estado.
+let idSeq = Date.now();
 const nextId = () => idSeq++;
 
 export default function ChatBot() {
@@ -189,7 +194,9 @@ export default function ChatBot() {
     setData(prefill);
     const s = CADASTRO_STEPS[first];
     const abertura = intro ?? "Perfeito! Vou fazer seu cadastro rapidinho. 📝";
-    botSay(`${abertura}\n\n${stepQuestion(s, prefill)}`, stepOptions(s, prefill));
+    const avisoLgpd =
+      "🔒 Seus dados são tratados conforme a **LGPD** (Lei nº 13.709/2018) e usados apenas para a locação — veja nossa [Política de Privacidade](/privacidade).";
+    botSay(`${abertura}\n\n${avisoLgpd}\n\n${stepQuestion(s, prefill)}`, stepOptions(s, prefill));
   };
 
   // Abertura do chat a partir dos cards da frota / hero, com pré-seleção.
@@ -222,6 +229,33 @@ export default function ChatBot() {
     return () => window.removeEventListener(CHAT_OPEN_EVENT, onOpenChat);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Link direto para o cadastro (ex.: enviado pela IA do WhatsApp da loja).
+  // Mesmo caminho do site antigo, para o robô só precisar trocar o domínio:
+  //   /contato                     → abre o assistente já no cadastro
+  //   /contato?veiculo=onix        → com o veículo pré-selecionado
+  //   /contato?categoria=sedans    → com a categoria pré-selecionada
+  // (/cadastro continua aceito como apelido, por segurança.)
+  useEffect(() => {
+    const path = window.location.pathname.replace(/\/+$/, "").toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    if (path !== "/contato" && path !== "/cadastro" && !params.has("cadastro")) return;
+
+    const detail: ChatOpenDetail = {};
+    const v = params.get("veiculo");
+    if (v) {
+      const achado = FLEET.find((f) => norm(f.short) === norm(v) || norm(f.name) === norm(v));
+      if (achado) detail.veiculo = achado.short;
+    }
+    const c = params.get("categoria");
+    if (c && !detail.veiculo) {
+      const cat = CATEGORIES.find((x) => norm(x) === norm(c));
+      if (cat) detail.categoria = cat;
+    }
+    // Pequena espera para a página montar antes de abrir o chat.
+    const t = setTimeout(() => abrirChat(detail), 700);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const finalize = (finalData: CadastroData) => {
     salvarCadastro(finalData);
     setMode("done");
@@ -241,6 +275,16 @@ export default function ChatBot() {
 
   const handleCadastro = async (text: string) => {
     const current = CADASTRO_STEPS[step];
+
+    // Consentimento (LGPD): sem "Concordo" não concluímos o cadastro.
+    if (current.key === "consentimento" && !consentiu(text)) {
+      botSay(
+        "Sem o seu consentimento com a Política de Privacidade não conseguimos concluir o cadastro pelo site. 😕\n\nSe mudar de ideia, é só concordar — ou fale direto com a nossa equipe.",
+        ["Concordo", "Falar no WhatsApp"]
+      );
+      return;
+    }
+
     const err = current.validate?.(text, dataRef.current);
     if (err) {
       botSay(err, stepOptions(current, dataRef.current));
@@ -250,6 +294,14 @@ export default function ChatBot() {
       ? current.transform(text.trim(), dataRef.current)
       : text.trim();
     let patch: CadastroData = { [current.key]: valor };
+
+    // Registra data/hora do consentimento (prova para a LGPD).
+    if (current.key === "consentimento") {
+      patch = {
+        consentimento: "Concordo",
+        consentimentoEm: new Date().toLocaleString("pt-BR"),
+      };
+    }
 
     // Hook assíncrono (ex.: buscar CEP na ViaCEP) com "digitando..." durante a consulta.
     if (current.resolve) {
@@ -530,7 +582,7 @@ export default function ChatBot() {
   );
 }
 
-/** Renderiza texto com **negrito** e quebras de linha, sem HTML perigoso. */
+/** Renderiza texto com **negrito**, *itálico*, [links](url) e quebras de linha. */
 function RichText({ text }: { text: string }): ReactNode {
   return (
     <>
@@ -538,19 +590,35 @@ function RichText({ text }: { text: string }): ReactNode {
         if (line === "") return <span key={i} className="block h-2" />;
         return (
           <span key={i} className="block">
-            {line.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part, j) => {
-              if (part.startsWith("**") && part.endsWith("**")) {
-                return (
-                  <strong key={j} className="font-semibold">
-                    {part.slice(2, -2)}
-                  </strong>
-                );
-              }
-              if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
-                return <em key={j}>{part.slice(1, -1)}</em>;
-              }
-              return <span key={j}>{part}</span>;
-            })}
+            {line
+              .split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\))/g)
+              .map((part, j) => {
+                if (part.startsWith("**") && part.endsWith("**")) {
+                  return (
+                    <strong key={j} className="font-semibold">
+                      {part.slice(2, -2)}
+                    </strong>
+                  );
+                }
+                const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
+                if (link) {
+                  return (
+                    <a
+                      key={j}
+                      href={link[2]}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold text-brand-700 underline"
+                    >
+                      {link[1]}
+                    </a>
+                  );
+                }
+                if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+                  return <em key={j}>{part.slice(1, -1)}</em>;
+                }
+                return <span key={j}>{part}</span>;
+              })}
           </span>
         );
       })}

@@ -13,8 +13,13 @@ import Contact from "./components/Contact";
 import Footer from "./components/Footer";
 import ChatBot from "./components/ChatBot";
 import PlanDetails from "./components/PlanDetails";
+import Privacidade from "./components/Privacidade";
 
 export default function App() {
+  // Rota simples (sem router): /privacidade abre a Política de Privacidade.
+  const rota = window.location.pathname.replace(/\/+$/, "");
+  if (rota === "/privacidade") return <Privacidade />;
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
