@@ -53,7 +53,8 @@ function paramsEmailJS(assunto: string, d: Record<string, string>): Record<strin
   const subinfo = [categoria, plano, periodo].filter((s) => s && s !== "—").join(" · ");
   return {
     subject: assunto,
-    to_email: LEAD_EMAIL,
+    // O destinatário NÃO é definido aqui: o "To Email" é fixo no painel do
+    // EmailJS, então ninguém consegue redirecionar o lead para outro endereço.
     reply_to: d["E-mail"] ?? "",
     veiculo: d["Veículo"] || categoria || "Veículo a definir",
     subinfo,
