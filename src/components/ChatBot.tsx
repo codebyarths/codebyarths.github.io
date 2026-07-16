@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { MessageSquare, X, Send, RotateCcw, Bot, ExternalLink } from "lucide-react";
 import { FLEET } from "@/lib/data";
 import { enviarEmailLoja } from "@/lib/email";
@@ -51,6 +51,13 @@ export default function ChatBot() {
   const dataRef = useRef<CadastroData>({});
   dataRef.current = data;
 
+  // Rolagem INSTANTÂNEA até a última mensagem (animação "smooth" é interrompida
+  // pelo teclado no mobile, deixando a conversa parada no meio).
+  const rolaParaFim = () => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  };
+
   // Mobile: chat em tela cheia + ajuste à área visível quando o teclado abre.
   // Sem isso, o teclado "empurra" a janela fixa para fora da tela (perde o input).
   useEffect(() => {
@@ -71,7 +78,7 @@ export default function ChatBot() {
       // Altura visível real (desconta o teclado) + compensa o "pan" do iOS.
       el.style.height = `${vv.height}px`;
       el.style.transform = `translateY(${vv.offsetTop}px)`;
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+      rolaParaFim();
     };
 
     ajusta();
@@ -122,9 +129,17 @@ export default function ChatBot() {
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-scroll.
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  // Auto-scroll: instantâneo (sem animação interrompível) e em três passadas —
+  // a imediata (pós-DOM) e duas de reforço para quando o layout assenta depois
+  // (indicador de digitação vira mensagem, teclado abre/fecha no mobile).
+  useLayoutEffect(() => {
+    rolaParaFim();
+    const t1 = setTimeout(rolaParaFim, 60);
+    const t2 = setTimeout(rolaParaFim, 220);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [messages, typing]);
 
   const pushUser = (content: string) =>
@@ -354,7 +369,10 @@ export default function ChatBot() {
           )}
 
           {/* Mensagens */}
-          <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-neutral-50 px-3.5 py-4">
+          <div
+            ref={scrollRef}
+            className="flex-1 space-y-3 overflow-y-auto overscroll-contain bg-neutral-50 px-3.5 py-4"
+          >
             {messages.map((m) => (
               <div key={m.id}>
                 <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -415,6 +433,7 @@ export default function ChatBot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={onKeyDown}
+                onFocus={() => setTimeout(rolaParaFim, 250)}
                 inputMode={
                   mode === "cadastro" ? CADASTRO_STEPS[step]?.inputMode ?? "text" : "text"
                 }
