@@ -86,10 +86,27 @@ export default function ChatBot() {
     vv?.addEventListener("scroll", ajusta);
     window.addEventListener("resize", ajusta);
 
-    // Trava o scroll da página atrás do chat (só no mobile/tela cheia).
+    // Trava a página atrás do chat. iOS ignora overflow:hidden no body para
+    // toque — a trava confiável é position:fixed preservando a posição do scroll.
     const eraMobile = window.innerWidth < 640;
-    const overflowAnterior = document.body.style.overflow;
-    if (eraMobile) document.body.style.overflow = "hidden";
+    const scrollYAntes = window.scrollY;
+    const b = document.body.style;
+    const estiloAnterior = {
+      position: b.position,
+      top: b.top,
+      left: b.left,
+      right: b.right,
+      width: b.width,
+      overflow: b.overflow,
+    };
+    if (eraMobile) {
+      b.position = "fixed";
+      b.top = `-${scrollYAntes}px`;
+      b.left = "0";
+      b.right = "0";
+      b.width = "100%";
+      b.overflow = "hidden";
+    }
 
     return () => {
       vv?.removeEventListener("resize", ajusta);
@@ -97,7 +114,15 @@ export default function ChatBot() {
       window.removeEventListener("resize", ajusta);
       el.style.height = "";
       el.style.transform = "";
-      if (eraMobile) document.body.style.overflow = overflowAnterior;
+      if (eraMobile) {
+        b.position = estiloAnterior.position;
+        b.top = estiloAnterior.top;
+        b.left = estiloAnterior.left;
+        b.right = estiloAnterior.right;
+        b.width = estiloAnterior.width;
+        b.overflow = estiloAnterior.overflow;
+        window.scrollTo({ top: scrollYAntes, behavior: "instant" });
+      }
     };
   }, [open]);
 
@@ -440,11 +465,14 @@ export default function ChatBot() {
                 placeholder={
                   mode === "cadastro" ? "Digite sua resposta..." : "Escreva sua mensagem..."
                 }
-                disabled={typing}
-                className="h-11 flex-1 rounded-xl border border-charcoal/15 bg-white px-3.5 text-base text-charcoal outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60"
+                className="h-11 flex-1 rounded-xl border border-charcoal/15 bg-white px-3.5 text-base text-charcoal outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
               />
               <button
-                onClick={() => send(input)}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  send(input);
+                  inputRef.current?.focus();
+                }}
                 disabled={typing || !input.trim()}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-grad text-white shadow-glow transition hover:brightness-105 disabled:opacity-40"
                 aria-label="Enviar"
