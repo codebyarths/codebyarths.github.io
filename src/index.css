@@ -118,6 +118,18 @@
     appearance: none;
   }
 
+  /* Altura máxima de modais tipo "bottom sheet". No iOS, vh inclui a área
+     atrás da barra do Safari (esconderia o cabeçalho/X do modal); dvh usa a
+     altura realmente visível. O @supports é o fallback para navegadores antigos. */
+  .modal-sheet {
+    max-height: 92vh;
+  }
+  @supports (height: 1dvh) {
+    .modal-sheet {
+      max-height: 86dvh;
+    }
+  }
+
   .section {
     @apply py-20 lg:py-28;
   }

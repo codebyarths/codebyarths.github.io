@@ -72,7 +72,7 @@ export default function PlanDetails() {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-neutral-50 shadow-2xl sm:rounded-2xl"
+        className="modal-sheet flex w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-neutral-50 shadow-2xl sm:rounded-2xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between gap-4 border-b border-charcoal/10 bg-white px-5 py-4">
@@ -98,7 +98,7 @@ export default function PlanDetails() {
         </div>
 
         {/* Corpo */}
-        <div className="flex-1 space-y-8 overflow-y-auto px-5 py-6">
+        <div className="flex-1 space-y-8 overflow-y-auto overscroll-contain px-5 py-6">
           {carGroups.map((g) => (
             <GrupoBloco key={g} grupo={g} soUm={carGroups.length === 1} />
           ))}
@@ -119,7 +119,7 @@ export default function PlanDetails() {
         </div>
 
         {/* Rodapé */}
-        <div className="border-t border-charcoal/10 bg-white px-5 py-4">
+        <div className="border-t border-charcoal/10 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4">
           <button onClick={cadastrar} className="btn-primary w-full text-base">
             Fazer meu cadastro <ArrowRight className="h-4 w-4" />
           </button>
