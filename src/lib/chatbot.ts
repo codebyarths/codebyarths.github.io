@@ -527,6 +527,59 @@ export function enderecoFinal(d: CadastroData): string {
   return [ruaNum, compl, d.bairro, cidadeUf].filter(Boolean).join(", ");
 }
 
+/**
+ * Valida o nome completo. Rejeita números, exige nome + sobrenome e recusa
+ * palavras de comando/atalho que claramente não são nome (ex.: um cliente
+ * real enviou "Quero alugar" como nome).
+ */
+const PALAVRAS_NAO_NOME = new Set([
+  "quero",
+  "alugar",
+  "aluguel",
+  "cadastro",
+  "cadastrar",
+  "reserva",
+  "reservar",
+  "preco",
+  "precos",
+  "valor",
+  "valores",
+  "carro",
+  "carros",
+  "moto",
+  "motos",
+  "plano",
+  "planos",
+  "fidelidade",
+  "mensal",
+  "semanal",
+  "diaria",
+  "frota",
+  "modelos",
+  "como",
+  "funciona",
+  "ajuda",
+  "oi",
+  "ola",
+  "teste",
+  "sim",
+  "nao",
+]);
+
+function validaNome(v: string): string | null {
+  const t = v.trim();
+  if (t.length < 3) return "Por favor, digite seu nome completo.";
+  if (/\d/.test(t)) return "O nome não pode conter números. 🙂 Digite seu **nome completo**, por favor.";
+  if (!/^[\p{L}\s'.-]+$/u.test(t))
+    return "Use apenas letras no nome. 🙂 Digite seu **nome completo**, por favor.";
+  const palavras = norm(t).split(" ").filter(Boolean);
+  if (palavras.some((p) => PALAVRAS_NAO_NOME.has(p)))
+    return "Isso não parece um nome. 🙂 Para o cadastro, preciso do seu **nome completo** (ex: Maria Souza).";
+  if (palavras.filter((p) => p.length >= 2).length < 2)
+    return "Preciso do seu **nome e sobrenome** (ex: Maria Souza). 🙂";
+  return null;
+}
+
 /** Valida CPF com dígitos verificadores. */
 function validaCPF(v: string): string | null {
   const c = soDigitos(v);
@@ -567,7 +620,7 @@ export const CADASTRO_STEPS: CadastroStep[] = [
     label: "Nome",
     question: "Para começar, qual é o seu **nome completo**?",
     type: "text",
-    validate: (v) => (v.trim().length < 3 ? "Por favor, digite seu nome completo." : null),
+    validate: validaNome,
   },
   {
     key: "cpf",
