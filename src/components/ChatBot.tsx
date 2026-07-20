@@ -21,6 +21,8 @@ import {
   consentiu,
   abrirChat,
   norm,
+  desvioDeInfo,
+  pedidoDeCadastroExato,
   type CadastroData,
   type ChatOpenDetail,
 } from "@/lib/chatbot";
@@ -275,6 +277,35 @@ export default function ChatBot() {
 
   const handleCadastro = async (text: string) => {
     const current = CADASTRO_STEPS[step];
+
+    // Cliente tocou num chip informativo (ex.: "Preços" da mensagem de
+    // boas-vindas) no meio do cadastro? Responde a dúvida e RE-PERGUNTA o
+    // campo atual, sem salvar o texto como resposta ("Preços" virava nome!).
+    // Só desvia se o texto NÃO for uma opção válida do passo atual
+    // (ex.: "Fidelidade" na pergunta de plano continua selecionando o plano).
+    const opcoesAtuais = stepOptions(current, dataRef.current) ?? [];
+    const ehOpcaoDoPasso = opcoesAtuais.some((o) => norm(o) === norm(text));
+    if (!ehOpcaoDoPasso) {
+      if (pedidoDeCadastroExato(text)) {
+        botSay(
+          `Já estamos no seu cadastro! 😊\n\n${stepQuestion(current, dataRef.current)}`,
+          opcoesAtuais.length ? opcoesAtuais : undefined
+        );
+        return;
+      }
+      const desvio = desvioDeInfo(text);
+      if (desvio) {
+        botSay(
+          `${desvio.answer}\n\n———\n\n📝 Voltando ao seu cadastro: ${stepQuestion(
+            current,
+            dataRef.current
+          )}`,
+          opcoesAtuais.length ? opcoesAtuais : undefined,
+          700
+        );
+        return;
+      }
+    }
 
     // Consentimento (LGPD): sem "Concordo" não concluímos o cadastro.
     if (current.key === "consentimento" && !consentiu(text)) {

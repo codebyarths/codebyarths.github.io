@@ -350,6 +350,43 @@ export function isCadastroTrigger(query: string): boolean {
   return CADASTRO_TRIGGERS.some((t) => q.includes(norm(t)));
 }
 
+/**
+ * DURANTE o cadastro: detecta se o texto é um atalho de informação (ex.: o
+ * cliente tocou no chip "Preços" da mensagem de boas-vindas) em vez de uma
+ * resposta ao campo atual. Compara por IGUALDADE exata (normalizada) para
+ * nunca confundir com nomes, endereços ou observações legítimas.
+ */
+const ATALHOS_INFO = [
+  "precos",
+  "preco",
+  "valores",
+  "tabela de precos",
+  "modelos disponiveis",
+  "modelos",
+  "frota",
+  "como funciona",
+  "documentos",
+  "documentos necessarios",
+  "planos",
+  "planos e assinatura",
+  "plano fidelidade",
+  "fidelidade",
+  "motorista de app",
+  "onde fica a loja",
+  "endereco da loja",
+  "horario",
+];
+
+export function desvioDeInfo(texto: string): Intent | null {
+  if (!ATALHOS_INFO.includes(norm(texto))) return null;
+  return matchIntent(texto);
+}
+
+/** Atalhos que significam "quero começar o cadastro" (já estando nele). */
+export function pedidoDeCadastroExato(texto: string): boolean {
+  return ["quero alugar", "fazer cadastro", "quero reservar", "reservar"].includes(norm(texto));
+}
+
 export const FALLBACK_ANSWER =
   "Hmm, não tenho certeza se entendi. 🤔 Posso te ajudar com **preços**, **modelos**, **documentos**, **como alugar** ou iniciar seu **cadastro**. Se preferir, te conecto com a equipe no WhatsApp.";
 
